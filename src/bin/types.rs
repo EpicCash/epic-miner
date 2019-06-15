@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use serde_json::Value;
+use core::{AlgorithmParams, Solution};
 
 /// Types used for stratum
 
@@ -58,19 +59,18 @@ pub struct LoginParams {
 pub struct SubmitParams {
 	pub height: u64,
 	pub job_id: u64,
-	pub edge_bits: u32,
 	pub nonce: u64,
-	pub pow: Vec<u64>,
+	pub pow: AlgorithmParams,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkerStatus {
-        pub id: String,
-        pub height: u64,
-        pub difficulty: u64,
-        pub accepted: u64,
-        pub rejected: u64,
-        pub stale: u64,
+	pub id: String,
+	pub height: u64,
+	pub difficulty: u64,
+	pub accepted: u64,
+	pub rejected: u64,
+	pub stale: u64,
 }
 
 /// Types used for internal communication from stratum client to miner
@@ -85,6 +85,6 @@ pub enum MinerMessage{
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage{
 	// height, job_id, edge_bits, nonce, pow
-	FoundSolution(u64, u64, u32, u64, Vec<u64>),
+	FoundSolution(u64, Solution),
 	Shutdown,
 }

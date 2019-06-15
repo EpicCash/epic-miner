@@ -15,9 +15,12 @@
 //! Stratum client implementation, for standalone mining against a running
 //! grin node
 extern crate cuckoo_miner as cuckoo;
+extern crate randomx_miner as randomx;
+
 extern crate grin_miner_config as config;
 extern crate grin_miner_plugin as plugin;
 extern crate grin_miner_util as util;
+extern crate grin_miner_core as core;
 
 extern crate bufstream;
 extern crate native_tls;
@@ -45,6 +48,9 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 
 use util::{init_logger, LOGGER};
+use core::{Miner, Algorithm};
+use core::errors::MinerError;
+use core::config::MinerConfig;
 
 // include build information
 pub mod built_info {
@@ -113,40 +119,17 @@ mod with_tui {
     }
 }
 
-fn main() {
-	// Init configuration
-	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
-		panic!("Error parsing config file: {}", e);
-	});
-	println!(
-		"Starting Grin-Miner from config file at: {}",
-		global_config.config_file_path.unwrap().to_str().unwrap()
-	);
-	// Init logging
-	let mut log_conf = global_config
-		.members
-		.as_mut()
-		.unwrap()
-		.logging
-		.clone()
-		.unwrap();
-
-	let mining_config = global_config.members.as_mut().unwrap().mining.clone();
-
-	if cfg!(feature = "tui") && mining_config.run_tui {
-		log_conf.log_to_stdout = false;
-		log_conf.tui_running = Some(true);
-	}
-
-	init_logger(Some(log_conf));
-
-	log_build_info();
+fn start_miner<T>(mut miner: T, mining_config: &MinerConfig)
+where
+	T: Miner + 'static
+{
 	let stats = Arc::new(RwLock::new(stats::Stats::default()));
 
 	let mut mc =
 		mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
 			panic!("Error loading mining controller: {}", e);
 		});
+
 	let cc = client::Controller::new(
 		&mining_config.stratum_server_addr,
 		mining_config.stratum_server_login.clone(),
@@ -158,27 +141,11 @@ fn main() {
 	.unwrap_or_else(|e| {
 		panic!("Error loading stratum client controller: {:?}", e);
 	});
+
 	let tui_stopped = Arc::new(AtomicBool::new(false));
 	let miner_stopped = Arc::new(AtomicBool::new(false));
 	let client_stopped = Arc::new(AtomicBool::new(false));
 
-	// Load plugin configuration and start solvers first,
-	// so we can exit pre-tui if something is obviously wrong
-	debug!(LOGGER, "Starting solvers");
-	let result = config::read_configs(
-		mining_config.miner_plugin_dir.clone(),
-		mining_config.miner_plugin_config.clone()
-        );
-	let mut miner = match result {
-		Ok(cfgs) => cuckoo::CuckooMiner::new(cfgs),
-		Err(e) => {
-			println!("Error loading plugins. Please check logs for further info.");
-			println!("Error details:");
-			println!("{:?}", e);
-			println!("Exiting");
-			return;
-		}
-	};
 	if let Err(e) = miner.start_solvers() {
 		println!("Error starting plugins. Please check logs for further info.");
 		println!("Error details:");
@@ -235,5 +202,44 @@ fn main() {
 			break;
 		}
 		thread::sleep(std::time::Duration::from_millis(100));
+	}
+}
+
+fn main() {
+	// Init configuration
+	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
+		panic!("Error parsing config file: {}", e);
+	});
+	println!(
+		"Starting Grin-Miner from config file at: {}",
+		global_config.config_file_path.unwrap().to_str().unwrap()
+	);
+	// Init logging
+	let mut log_conf = global_config
+		.members
+		.as_mut()
+		.unwrap()
+		.logging
+		.clone()
+		.unwrap();
+
+	let mining_config = global_config.members.as_mut().unwrap().mining.clone();
+
+	if cfg!(feature = "tui") && mining_config.run_tui {
+		log_conf.log_to_stdout = false;
+		log_conf.tui_running = Some(true);
+	}
+
+	init_logger(Some(log_conf));
+
+	log_build_info();
+
+	// Load plugin configuration and start solvers first,
+	// so we can exit pre-tui if something is obviously wrong
+	debug!(LOGGER, "Starting solvers");
+
+	match mining_config.algorithm.clone().unwrap() {
+		Algorithm::RandomX => start_miner(randomx::RxMiner::new(&mining_config), &mining_config),//randomx::RxMiner::new(&mining_config),
+		Algorithm::Cuckoo => start_miner(cuckoo::CuckooMiner::new(&mining_config), &mining_config),
 	}
 }

@@ -20,12 +20,12 @@ use time;
 use util::LOGGER;
 use {config, stats, types};
 
-use cuckoo::{CuckooMiner, CuckooMinerError};
-
-use plugin::SolverStats;
+use core::{Miner, Stats, AlgorithmParams};
+use core::config::MinerConfig;
+use core::errors::MinerError;
 
 pub struct Controller {
-	_config: config::MinerConfig,
+	_config: MinerConfig,
 	rx: mpsc::Receiver<types::MinerMessage>,
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
@@ -37,7 +37,7 @@ pub struct Controller {
 
 impl Controller {
 	pub fn new(
-		config: config::MinerConfig,
+		config: MinerConfig,
 		stats: Arc<RwLock<stats::Stats>>,
 	) -> Result<Controller, String> {
 		{
@@ -62,7 +62,10 @@ impl Controller {
 	}
 
 	/// Run the mining controller, solvers in miner should already be going
-	pub fn run(&mut self, mut miner: CuckooMiner) -> Result<(), CuckooMinerError> {
+	pub fn run<T>(&mut self, mut miner: T) -> Result<(), MinerError> 
+	where
+		T: Miner
+	{
 		// how often to output stats
 		let stat_output_interval = 2;
 		let mut next_stat_output = time::get_time().sec + stat_output_interval;
@@ -101,28 +104,22 @@ impl Controller {
 
 			let solutions = miner.get_solutions();
 			if let Some(ss) = solutions {
-				let edge_bits = ss.edge_bits;
-				for i in 0..ss.num_sols {
+				let len = ss.len();
+				for i in ss {
 					let _ =
 						self.client_tx
 							.as_mut()
 							.unwrap()
-							.send(types::ClientMessage::FoundSolution(
-								self.current_height,
-								ss.sols[i as usize].id,
-								edge_bits,
-								ss.sols[i as usize].nonce,
-								ss.sols[i as usize].proof.to_vec(),
-							));
+							.send(types::ClientMessage::FoundSolution(self.current_height, i));
 				}
 				let mut s_stats = self.stats.write().unwrap();
-				s_stats.mining_stats.solution_stats.num_solutions_found += ss.num_sols;
+				s_stats.mining_stats.solution_stats.num_solutions_found += len as u32;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
 		}
 	}
 
-	fn output_job_stats(&mut self, stats: Vec<SolverStats>) {
+	fn output_job_stats(&mut self, stats: Vec<Stats>) {
 		let mut sps_total = 0.0;
 		let mut i = 0;
 		for s in stats.clone() {

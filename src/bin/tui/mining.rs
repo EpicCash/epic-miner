@@ -26,7 +26,7 @@ use cursive::Cursive;
 use tui::constants::*;
 use tui::types::*;
 
-use plugin::SolverStats;
+use core::Stats;
 use stats;
 use tui::table::{TableView, TableViewItem};
 
@@ -55,7 +55,7 @@ impl MiningDeviceColumn {
 	}
 }
 
-impl TableViewItem<MiningDeviceColumn> for SolverStats {
+impl TableViewItem<MiningDeviceColumn> for Stats {
 	fn to_column(&self, column: MiningDeviceColumn) -> String {
 		let last_solution_time_secs = self.last_solution_time as f64 / 1000000000.0;
 		match column {
@@ -104,7 +104,7 @@ pub struct TUIMiningView;
 impl TUIStatusListener for TUIMiningView {
 	/// Create the mining view
 	fn create() -> Box<View> {
-		let table_view = TableView::<SolverStats, MiningDeviceColumn>::new()
+		let table_view = TableView::<Stats, MiningDeviceColumn>::new()
 			.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
 				c.width_percent(20)
 			}).column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
@@ -226,7 +226,7 @@ impl TUIStatusListener for TUIMiningView {
 
 		let _ = c.call_on_id(
 			TABLE_MINING_STATUS,
-			|t: &mut TableView<SolverStats, MiningDeviceColumn>| {
+			|t: &mut TableView<Stats, MiningDeviceColumn>| {
 				t.set_items(mining_stats.device_stats);
 			},
 		);

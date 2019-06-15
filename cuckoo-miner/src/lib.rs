@@ -29,6 +29,7 @@
 
 extern crate grin_miner_plugin as plugin;
 extern crate grin_miner_util as util;
+extern crate grin_miner_core as core;
 
 extern crate serde;
 #[macro_use]

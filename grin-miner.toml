@@ -36,6 +36,9 @@ log_file_append = true
 
 [mining]
 
+# Cuckoo, RandomX, ProgPow
+algorithm = "RandomX"
+
 # whether to run the tui
 run_tui = true
 

@@ -27,6 +27,7 @@ use std::thread;
 use time;
 use types;
 use util::LOGGER;
+use core::{Solution, AlgorithmParams};
 
 #[derive(Debug)]
 pub enum Error {
@@ -311,17 +312,13 @@ impl Controller {
 	fn send_message_submit(
 		&mut self,
 		height: u64,
-		job_id: u64,
-		edge_bits: u32,
-		nonce: u64,
-		pow: Vec<u64>,
+		solution: Solution,
 	) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
-			job_id: job_id,
-			edge_bits: edge_bits,
-			nonce: nonce,
-			pow: pow,
+			job_id: solution.get_id(),
+			nonce: solution.get_nonce(),
+			pow: solution.get_algorithm_params(),
 		};
 		let params = serde_json::to_string(&params_in)?;
 		let req = types::RpcRequest {
@@ -639,8 +636,8 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Client received message: {:?}", message);
 				let result = match message {
-					types::ClientMessage::FoundSolution(height, job_id, edge_bits, nonce, pow) => {
-						self.send_message_submit(height, job_id, edge_bits, nonce, pow)
+					types::ClientMessage::FoundSolution(height, solution) => {
+						self.send_message_submit(height, solution)
 					}
 					types::ClientMessage::Shutdown => {
 						//TODO: Inform server?

@@ -15,8 +15,8 @@
 //! Miner types
 use std::sync::{Arc, RwLock};
 
+use core::errors::MinerError;
 use plugin::{SolverSolutions, SolverStats};
-use CuckooMinerError;
 use {PluginConfig, PluginLibrary};
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
@@ -36,7 +36,7 @@ pub struct SolverInstance {
 
 impl SolverInstance {
 	/// Create a new solver instance with the given config
-	pub fn new(config: PluginConfig) -> Result<SolverInstance, CuckooMinerError> {
+	pub fn new(config: PluginConfig) -> Result<SolverInstance, MinerError> {
 		let l = PluginLibrary::new(&config.file)?;
 		Ok(SolverInstance {
 			lib: l,

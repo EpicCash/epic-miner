@@ -17,7 +17,9 @@
 use plugin::SolverParams;
 use std::path::PathBuf;
 use std::{fmt, io};
-use {CuckooMinerError, PluginLibrary};
+use {PluginLibrary};
+
+use core::errors::{MinerError};
 
 pub static SO_SUFFIX: &str = ".cuckooplugin";
 
@@ -36,10 +38,10 @@ pub struct PluginConfig {
 
 impl PluginConfig {
 	/// create new!
-	pub fn new(mut plugin_dir: PathBuf, name: &str) -> Result<PluginConfig, CuckooMinerError> {
+	pub fn new(mut plugin_dir: PathBuf, name: &str) -> Result<PluginConfig, MinerError> {
 		plugin_dir.push(format!("{}{}", name, SO_SUFFIX).as_str());
 		let plugin_file_str = plugin_dir.to_str().ok_or_else(|| {
-			CuckooMinerError::PluginNotFoundError(
+			MinerError::PluginNotFoundError(
 				"Invalid plugin path. Paths must be valid unicode".to_owned(),
 			)
 		})?;

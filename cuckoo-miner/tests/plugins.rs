@@ -23,7 +23,8 @@ extern crate rand;
 use common::{T4_GENESIS_PREPOW, T4_GENESIS_PROOF};
 use std::env;
 
-use cuckoo::{CuckooMinerError, PluginLibrary};
+use core::errors::MinerError;
+use cuckoo::PluginLibrary;
 use plugin::{SolverParams, SolverSolutions, SolverStats};
 
 static SO_SUFFIX: &str = ".cuckooplugin";
@@ -63,7 +64,7 @@ fn from_hex_string(in_str: &str) -> Vec<u8> {
 }
 
 //Helper to load a plugin library
-fn load_plugin_lib(plugin: &str) -> Result<PluginLibrary, CuckooMinerError> {
+fn load_plugin_lib(plugin: &str) -> Result<PluginLibrary, MinerError> {
 	let mut p_path = env::current_exe().unwrap();
 	p_path.pop();
 	p_path.pop();
