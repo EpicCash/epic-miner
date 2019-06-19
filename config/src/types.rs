@@ -22,24 +22,6 @@ use util;
 use core::Algorithm;
 use core::config::MinerConfig;
 
-/// CuckooMinerPlugin configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GrinMinerPluginConfig {
-	/// The type of plugin to load (i.e. filters on filename)
-	pub plugin_name: String,
-
-	///
-	pub parameters: Option<HashMap<String, u32>>,
-}
-
-impl Default for GrinMinerPluginConfig {
-	fn default() -> GrinMinerPluginConfig {
-		GrinMinerPluginConfig {
-			plugin_name: String::new(),
-			parameters: None,
-		}
-	}
-}
 
 /// Error type wrapping config errors.
 #[derive(Debug)]

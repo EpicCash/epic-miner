@@ -39,7 +39,6 @@ extern crate serde_json;
 extern crate blake2_rfc as blake2;
 extern crate byteorder;
 extern crate crypto;
-extern crate rand;
 extern crate regex;
 
 extern crate libc;
@@ -48,6 +47,7 @@ extern crate libloading as libloading;
 #[macro_use]
 extern crate slog;
 
+extern crate rand;
 extern crate glob;
 
 mod config;

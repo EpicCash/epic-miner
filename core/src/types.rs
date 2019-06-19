@@ -1,8 +1,11 @@
 use std::string;
 use std::ffi::CString;
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 const MAX_NAME_LEN: usize = 256;
+
+pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Algorithm {
@@ -43,6 +46,23 @@ pub struct Stats {
 	pub last_start_time: u64,
 	pub last_end_time: u64,
 	pub last_solution_time: u64,
+}
+
+impl Default for Stats {
+	fn default() -> Stats {
+		Stats {
+			device_id: 0,
+			edge_bits: 0,
+			plugin_name: [0; MAX_NAME_LEN],
+			device_name: [0; MAX_NAME_LEN],
+			has_errored: false,
+			error_reason: [0; MAX_NAME_LEN],
+			iterations: 0,
+			last_start_time: 0,
+			last_end_time: 0,
+			last_solution_time: 0,
+		}
+	}
 }
 
 impl Stats {
@@ -102,4 +122,58 @@ impl Solution {
     pub fn get_algorithm_params(&self) -> AlgorithmParams {
         self.2.clone()
     }
+}
+
+/// Data intended to be shared across threads
+pub struct JobSharedData {
+	/// ID of the current running job (not currently used)
+	pub job_id: u32,
+
+	/// block height of current running job
+	pub height: u64,
+
+	/// The part of the header before the nonce, which this
+	/// module will mutate in search of a solution
+	pub pre_nonce: String,
+
+	/// The part of the header after the nonce
+	pub post_nonce: String,
+
+	/// The target difficulty. Only solutions >= this
+	/// target will be put into the output queue
+	pub difficulty: u64,
+
+	/// Output solutions
+	pub solutions: Vec<Solution>,
+
+	/// Current stats
+	pub stats: Vec<Stats>,
+}
+
+impl Default for JobSharedData {
+	fn default() -> JobSharedData {
+		JobSharedData {
+			job_id: 0,
+			height: 0,
+			pre_nonce: String::from(""),
+			post_nonce: String::from(""),
+			difficulty: 0,
+			solutions: Vec::new(),
+			stats: vec![],
+		}
+	}
+}
+
+impl JobSharedData {
+	pub fn new(num_solvers: usize) -> JobSharedData {
+		JobSharedData {
+			job_id: 0,
+			height: 0,
+			pre_nonce: String::from(""),
+			post_nonce: String::from(""),
+			difficulty: 1,
+			solutions: Vec::new(),
+			stats: vec![Stats::default(); num_solvers],
+		}
+	}
 }

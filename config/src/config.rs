@@ -23,7 +23,7 @@ use cuckoo::{PluginConfig};
 use toml;
 use core::config::MinerConfig;
 use core::MinerError;
-use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig};
+use types::{ConfigError, ConfigMembers, GlobalConfig};
 use util::{LoggingConfig, LOGGER};
 
 extern crate dirs;
