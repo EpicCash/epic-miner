@@ -1,20 +1,34 @@
 use std::thread;
 use std::string;
 use std::time;
+use std::time::{SystemTime, Instant, UNIX_EPOCH};
 use std::sync::{mpsc, Arc, RwLock};
-use util::LOGGER;
 
+use core::util;
 use core::errors::MinerError;
 use core::config::MinerConfig;
 use core::miner::Miner;
-use core::util;
+use core::types::AlgorithmParams;
 use core::{Stats, ControlMessage, Solution, JobSharedData, JobSharedDataType};
 
-use randomx::RxState;
+use util::LOGGER;
+use bigint::uint::U256;
+use randomx::{RxState, calculate};
+
+const MAX_HASHS: u64 = 100;
+
+fn timestamp() -> u64 {
+	let start = SystemTime::now();
+    let since_the_epoch = start.duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    since_the_epoch.as_millis() as u64
+}
 
 pub struct RxMiner {
 	/// Data shared across threads
 	pub shared_data: Arc<RwLock<JobSharedData>>,
+
+	cpu_threads: u8,
 
     // randomx mining state
     state: Arc<RwLock<RxState>>,
@@ -47,34 +61,16 @@ impl RxMiner {
 			s.stats[instance].set_plugin_name("randomx_cpu");
 		}
 
-		let stop_handle = thread::spawn(move || loop {
-			while let Some(message) = control_rx.iter().next() {
-				match message {
-					ControlMessage::Stop => {
-						println!("stopped");
-						return;
-					}
-					ControlMessage::Pause => {
-						println!("paused");
-					}
-					_ => {}
-				};
-			}
-		});
-
-		{
-			let mut s = shared_data.write().unwrap();
-			s.stats[instance].set_plugin_name("randomx_cpu");
-		}
-
-		unsafe {
-			let mut rx = state.write().unwrap();
-			rx.init_cache(&[0; 32], true).expect("hahaha");
-			rx.init_dataset(4, false).expect("heuheuehu");
-		}
-
 		let mut iter_count = 0;
 		let mut paused = true;
+
+		let vm = {
+			unsafe { 
+				let mut rx = state.write().unwrap();
+				rx.create_vm().unwrap()
+			}
+		};
+
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
 				//debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
@@ -85,6 +81,7 @@ impl RxMiner {
 					_ => {}
 				}
 			}
+
 			if paused {
 				thread::sleep(time::Duration::from_micros(100));
 				continue;
@@ -93,7 +90,7 @@ impl RxMiner {
 				let mut s = shared_data.write().unwrap();
 				s.stats[instance].set_plugin_name("randomx_cpu");
 			}
-
+			
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
@@ -102,16 +99,48 @@ impl RxMiner {
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 
-			println!("Header: {:?}", header.1);
-			println!("Nonce: {:?}", header.0);
+			let start = timestamp();
+			let mut header = header.1;
+			let results = (0..MAX_HASHS)
+				.map(|x| calculate(vm, &mut header, nonce + x))
+				.collect::<Vec<U256>>();
+			let end = timestamp();
+			let elapsed = end - start;
 
-			// mining here
+			//println!("result: {:?}", results);
+			//println!("elapsed {}", elapsed);
+			//println!("difficulty {}", target_difficulty);
+			//println!("hash {} per seconds", results.len() / elapsed);
+
 			iter_count += 1;
 			let still_valid = { height == shared_data.read().unwrap().height };
 			if still_valid {
 				let mut s = shared_data.write().unwrap();
+				
+				for i in 0..results.len() {
+					let hash = results[i];
+					if hash.low_u64() <= target_difficulty {
+						s.solutions.push(Solution::new(
+							instance as u64,
+							nonce + i as u64,
+							AlgorithmParams::RandomX(hash.into())));
+					}
+				}
+
+				let mut stats = Stats{
+					last_start_time: start,
+					last_end_time: end,
+					last_solution_time: end,
+					iterations: iter_count.clone(),
+					..Default::default()
+				};
+				stats.set_plugin_name("randomx_cpu");
+				s.stats[instance] = stats;
 			}
+			thread::sleep(time::Duration::from_micros(100));
 		}
+
+		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
 	}
 }
 
@@ -124,32 +153,50 @@ impl Miner for RxMiner {
 		rx_state.jit_compiler = true;
         RxMiner {
             state: Arc::new(RwLock::new(rx_state)),
-            shared_data: Arc::new(RwLock::new(JobSharedData::new(1))),
+            shared_data: Arc::new(RwLock::new(JobSharedData::new(configs.cpu_threads as usize))),
 			control_txs: vec![],
             solver_loop_txs: vec![],
             solver_stopped_rxs: vec![],
+			cpu_threads: configs.cpu_threads,
         }
     }
 
-    fn start_solvers(&mut self) -> Result<(), MinerError> {
-		let instance = 0 as usize;
-		let state = self.state.clone();
-		let shared_data = self.shared_data.clone();
-		let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
-		let (solver_tx, solver_rx) = mpsc::channel::<ControlMessage>();
-		let (solver_stopped_tx, solver_stopped_rx) = mpsc::channel::<ControlMessage>();
-		self.control_txs.push(control_tx);
-		self.solver_loop_txs.push(solver_tx);
-		self.solver_stopped_rxs.push(solver_stopped_rx);
-		thread::spawn(move || {
-			let _ = RxMiner::solver_thread(
-				instance,
-				state,
-				shared_data,
-				control_rx,
-				solver_rx,
-				solver_stopped_tx);
+    fn start_solvers(&mut self) -> Result<(), MinerError> {		
+		let s = self.state.clone();
+		let cpu_threads = self.cpu_threads.clone();
+
+		let th = thread::spawn(move || {
+			let mut rx = s.write().unwrap();
+			unsafe {
+				rx.init_cache(&[0; 32], false).expect("hahaha");
+				rx.init_dataset(cpu_threads).expect("heuheuehu");
+			}
 		});
+
+		th.join();
+		
+		for i in 0..(cpu_threads as usize) {
+			let state = self.state.clone();
+			let shared_data = self.shared_data.clone();
+
+			let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
+			let (solver_tx, solver_rx) = mpsc::channel::<ControlMessage>();
+			let (solver_stopped_tx, solver_stopped_rx) = mpsc::channel::<ControlMessage>();
+	
+			self.control_txs.push(control_tx);
+			self.solver_loop_txs.push(solver_tx);
+			self.solver_stopped_rxs.push(solver_stopped_rx);
+
+			thread::spawn(move || {
+				let _ = RxMiner::solver_thread(
+					i, state,
+					shared_data,
+					control_rx,
+					solver_rx,
+					solver_stopped_tx);
+			});
+		}
+
 		Ok(())
     }
 

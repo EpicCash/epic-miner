@@ -27,6 +27,8 @@ pub struct MinerConfig {
 	/// Algorithm will be use to miner
 	pub algorithm: Option<Algorithm>,
 
+	pub cpu_threads: u8,
+
 	/// Whether to run the tui
 	pub run_tui: bool,
 
@@ -53,6 +55,7 @@ impl Default for MinerConfig {
 	fn default() -> MinerConfig {
 		MinerConfig {
 			algorithm: Some(Algorithm::RandomX),
+			cpu_threads: 1,
 			run_tui: false,
 			miner_plugin_dir: None,
 			miner_plugin_config: vec![],
