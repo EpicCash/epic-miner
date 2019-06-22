@@ -18,7 +18,9 @@
 extern crate cuckoo_miner as cuckoo;
 extern crate time;
 
-use self::cuckoo::{CuckooMiner, PluginConfig};
+use core::config::MinerConfig;
+use core::Miner;
+use self::cuckoo::PluginConfig;
 use std;
 use std::env;
 use std::path::PathBuf;
@@ -59,7 +61,9 @@ pub fn mining_plugin_dir_for_tests() -> PathBuf {
 }
 
 // Helper function, tests a particular miner implementation against a known set
-pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds: i64) {
+pub fn mine_async_for_duration<T>(miner: &mut T, duration_in_seconds: i64)
+	where T: Miner
+{
 	let stat_check_interval = 3;
 	let mut deadline = time::get_time().sec + duration_in_seconds;
 	let mut next_stat_check = time::get_time().sec + stat_check_interval;
@@ -71,7 +75,6 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 	let extra_time_value = 600;
 
 	// these always get consumed after a notify
-	let mut miner = CuckooMiner::new(configs.clone());
 	let _ = miner.start_solvers();
 
 	while time::get_time().sec < deadline {
@@ -80,17 +83,13 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 			duration_in_seconds
 		);
 		let mut i = 0;
-		for c in configs.clone().into_iter() {
-			println!("Plugin {}: {}", i, c.name);
-			i += 1;
-		}
 
 		miner.notify(1, 1, T4_GENESIS_PREPOW, "", 0).unwrap();
 
 		loop {
 			if let Some(solutions) = miner.get_solutions() {
-				for i in 0..solutions.num_sols {
-					println!("Sol found: {}", solutions.sols[i as usize]);
+				for i in 0..solutions.len() {
+					println!("Sol found: {:?}", solutions[i]);
 					continue;
 				}
 			}

@@ -21,30 +21,27 @@ use std::sync::{mpsc, Arc, RwLock};
 use std::{thread, time};
 use util::LOGGER;
 
+use config;
+use config::read::read_configs;
 use config::types::PluginConfig;
 use miner::types::{JobSharedData, JobSharedDataType, SolverInstance};
 
 use miner::util;
 use miner::consensus::Proof;
 use plugin::{SolverCtxWrapper, SolverSolutions, Solution, SolverStats};
-use {CuckooMinerError, PluginLibrary};
+use {PluginLibrary};
 
-/// Miner control Messages
-#[derive(Debug)]
-enum ControlMessage {
-	/// Stop everything, pull down, exis
-	Stop,
-	/// Stop current mining iteration, set solver threads to paused
-	Pause,
-	/// Resume
-	Resume,
-	/// Solver reporting stopped
-	SolverStopped(usize),
-}
+use core::config::MinerConfig;
+use core::{
+	Miner,
+	Stats,
+	ControlMessage,
+	MinerError,
+	Solution as CrSolution,
+	AlgorithmParams};
 
 /// An instance of a miner, which loads a cuckoo-miner plugin
 /// and calls its mine function according to the provided configuration
-
 pub struct CuckooMiner {
 	/// Configurations
 	configs: Vec<PluginConfig>,
@@ -62,19 +59,15 @@ pub struct CuckooMiner {
 	solver_stopped_rxs: Vec<mpsc::Receiver<ControlMessage>>,
 }
 
-impl CuckooMiner {
-	/// Creates a new instance of a CuckooMiner with the given configuration.
-	/// One PluginConfig per device
+unsafe impl Send for CuckooMiner{}
+unsafe impl Sync for CuckooMiner{}
 
-	pub fn new(configs: Vec<PluginConfig>) -> CuckooMiner {
-		let len = configs.len();
-		CuckooMiner {
-			configs: configs,
-			shared_data: Arc::new(RwLock::new(JobSharedData::new(len))),
-			control_txs: vec![],
-			solver_loop_txs: vec![],
-			solver_stopped_rxs: vec![],
-		}
+impl CuckooMiner {
+
+	fn read_plugins(mining_config: &MinerConfig) -> Result<Vec<PluginConfig>, MinerError> {
+		config::read_configs(
+			mining_config.miner_plugin_dir.clone(),
+			mining_config.miner_plugin_config.clone())
 	}
 
 	/// Solver's instance of a thread
@@ -205,9 +198,25 @@ impl CuckooMiner {
 		solver.unload();
 		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
 	}
+}
+
+impl Miner for CuckooMiner {
+	/// Creates a new instance of a CuckooMiner with the given configuration.
+	/// One PluginConfig per device
+	fn new(mining_config: &MinerConfig) -> Self {
+		let configs = CuckooMiner::read_plugins(mining_config).unwrap();
+		let len = configs.len();
+		CuckooMiner {
+			configs: configs,
+			shared_data: Arc::new(RwLock::new(JobSharedData::new(len))),
+			control_txs: vec![],
+			solver_loop_txs: vec![],
+			solver_stopped_rxs: vec![],
+		}
+	}
 
 	/// Starts solvers, ready for jobs via job control
-	pub fn start_solvers(&mut self) -> Result<(), CuckooMinerError> {
+	fn start_solvers(&mut self) -> Result<(), MinerError> {
 		let mut solvers = Vec::new();
 		for c in self.configs.clone() {
 			solvers.push(SolverInstance::new(c)?);
@@ -240,7 +249,7 @@ impl CuckooMiner {
 	/// for the given inputs and place them into its output queue until
 	/// instructed to stop.
 
-	pub fn notify(
+	fn notify(
 		&mut self,
 		job_id: u32,      // Job id
 		height: u64,      // Job height
@@ -248,7 +257,7 @@ impl CuckooMiner {
 		post_nonce: &str, // Post-nonce portion of header
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
-	) -> Result<(), CuckooMinerError> {
+	) -> Result<(), MinerError> {
 		let mut sd = self.shared_data.write().unwrap();
 		let mut paused = false;
 		if height != sd.height {
@@ -270,7 +279,7 @@ impl CuckooMiner {
 
 	/// Returns solutions if currently waiting.
 
-	pub fn get_solutions(&self) -> Option<SolverSolutions> {
+	fn get_solutions(&self) -> Option<Vec<CrSolution>> {
 		// just to prevent endless needless locking of this
 		// when using fast test miners, in real cuckoo30 terms
 		// this shouldn't be an issue
@@ -282,17 +291,45 @@ impl CuckooMiner {
 			// println!("Get_solution Time spent waiting for lock: {}",
 			// time_elapsed.as_secs()*1000 +(time_elapsed.subsec_nanos()/1_000_000)as u64);
 			if s.solutions.len() > 0 {
+				let mut solutions = Vec::new();
 				let sol = s.solutions.pop().unwrap();
-				return Some(sol);
+				let edge_bits = sol.edge_bits;
+
+				for i in 0..sol.num_sols {
+					solutions.push(CrSolution::new(
+						sol.sols[i as usize].id,
+						sol.sols[i as usize].nonce,
+						AlgorithmParams::Cuckoo(edge_bits, sol.sols[i as usize].proof.to_vec())
+					));
+				}
+
+				return Some(solutions);
 			}
 		}
 		None
 	}
 
 	/// get stats for all running solvers
-	pub fn get_stats(&self) -> Result<Vec<SolverStats>, CuckooMinerError> {
+	fn get_stats(&self) -> Result<Vec<Stats>, MinerError> {
 		let s = self.shared_data.read().unwrap();
-		Ok(s.stats.clone())
+		let mut stats = Vec::new();
+
+		for i in s.stats.clone() {
+			stats.push(Stats {
+				device_id: i.device_id,
+				edge_bits: i.edge_bits,
+				plugin_name: i.plugin_name,
+				device_name: i.device_name,
+				has_errored: i.has_errored,
+				error_reason: i.error_reason,
+				iterations: i.iterations,
+				last_start_time: i.last_start_time,
+				last_end_time: i.last_end_time,
+				last_solution_time: i.last_solution_time
+			});
+		}
+
+		Ok(stats)
 	}
 
 	/// #Description
@@ -304,7 +341,7 @@ impl CuckooMiner {
 	///
 	/// Nothing
 
-	pub fn stop_solvers(&self) {
+	fn stop_solvers(&self) {
 		for t in self.control_txs.iter() {
 			let _ = t.send(ControlMessage::Stop);
 		}
@@ -315,7 +352,7 @@ impl CuckooMiner {
 	}
 
 	/// Tells current solvers to stop and wait
-	pub fn pause_solvers(&self) {
+	fn pause_solvers(&self) {
 		for t in self.control_txs.iter() {
 			let _ = t.send(ControlMessage::Pause);
 		}
@@ -326,7 +363,7 @@ impl CuckooMiner {
 	}
 
 	/// Tells current solvers to stop and wait
-	pub fn resume_solvers(&self) {
+	fn resume_solvers(&self) {
 		for t in self.control_txs.iter() {
 			let _ = t.send(ControlMessage::Resume);
 		}
@@ -337,7 +374,7 @@ impl CuckooMiner {
 	}
 
 	/// block until solvers have all exited
-	pub fn wait_for_solver_shutdown(&self) {
+	fn wait_for_solver_shutdown(&self) {
 		for r in self.solver_stopped_rxs.iter() {
 			while let Some(message) = r.iter().next() {
 				match message {

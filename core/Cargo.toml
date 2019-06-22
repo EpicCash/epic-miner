@@ -1,0 +1,9 @@
+[package]
+name = "grin_miner_core"
+version = "0.1.0"
+
+[dependencies]
+serde = "1"
+serde_derive = "1"
+rand = "^0.3.16"
+byteorder = "^0.5"

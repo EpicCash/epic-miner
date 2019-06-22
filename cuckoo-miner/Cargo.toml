@@ -18,6 +18,7 @@ test-avx2 = []
 build-cuda-plugins = []
 
 [dependencies]
+grin_miner_core = { path = "../core", version = "0.1.0" }
 grin_miner_util = { path = "../util", version = "1.0.2" }
 grin_miner_plugin = { path = "../plugin", version = "1.0.2" }
 time = "^0.1"

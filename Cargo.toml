@@ -32,6 +32,8 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 term = "0.4"
 time = "0.1"
 rand = "^0.3.16"
+
+grin_miner_core = { path = "./core", version = "0.1.0" }
 grin_miner_util = { path = "./util", version = "1.0.2" }
 grin_miner_plugin = { path = "./plugin", version = "1.0.2" }
 grin_miner_config = { path = "./config", version = "1.0.2" }
@@ -40,6 +42,8 @@ grin_miner_config = { path = "./config", version = "1.0.2" }
 cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-cuda-plugins"]}
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
 ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.2", optional = true}
+randomx = { path = "./randomx-rust", version = "0.1.0" }
+randomx_miner = { path = "./randomx-miner", version = "0.1.0" }
 
 [[test]]
 name = "cucumber"

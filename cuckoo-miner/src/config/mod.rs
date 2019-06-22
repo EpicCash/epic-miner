@@ -22,3 +22,6 @@
 #![warn(missing_docs)]
 
 pub mod types;
+pub mod read;
+
+pub use self::read::read_configs;

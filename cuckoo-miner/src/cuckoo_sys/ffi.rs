@@ -24,7 +24,7 @@ use util::LOGGER;
 
 use libloading;
 
-use error::error::CuckooMinerError;
+use core::errors::MinerError;
 
 /// Struct to hold instances of loaded plugins
 
@@ -43,13 +43,13 @@ pub struct PluginLibrary {
 impl PluginLibrary {
 	/// Loads the specified library
 
-	pub fn new(lib_full_path: &str) -> Result<PluginLibrary, CuckooMinerError> {
+	pub fn new(lib_full_path: &str) -> Result<PluginLibrary, MinerError> {
 		debug!(LOGGER, "Loading miner plugin: {}", &lib_full_path);
 
 		let result = libloading::Library::new(lib_full_path);
 
 		if let Err(e) = result {
-			return Err(CuckooMinerError::PluginNotFoundError(String::from(
+			return Err(MinerError::PluginNotFoundError(String::from(
 				format!("{} - {:?}", lib_full_path, e),
 			)));
 		}
@@ -61,7 +61,7 @@ impl PluginLibrary {
 	fn load_symbols(
 		loaded_library: libloading::Library,
 		path: &str,
-	) -> Result<PluginLibrary, CuckooMinerError> {
+	) -> Result<PluginLibrary, MinerError> {
 		unsafe {
 			let ret_val = PluginLibrary {
 				lib_full_path: String::from(path),

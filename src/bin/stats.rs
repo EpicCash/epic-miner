@@ -19,6 +19,7 @@
 /// back to interested callers (such as the TUI)
 
 use plugin;
+use core::Stats as CrStats;
 
 #[derive(Clone)]
 pub struct SolutionStats {
@@ -57,7 +58,7 @@ pub struct MiningStats {
 	/// solution statistics
 	pub solution_stats: SolutionStats,
 	/// Individual device status from Cuckoo-Miner
-	pub device_stats: Vec<plugin::SolverStats>,
+	pub device_stats: Vec<CrStats>,
 }
 
 impl Default for MiningStats {

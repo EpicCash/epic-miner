@@ -1,13 +1,26 @@
 #[macro_use]
 extern crate cucumber_rust;
 extern crate cuckoo_miner as cuckoo;
+extern crate randomx_miner as randomx;
 extern crate rand;
+extern crate grin_miner_core as core;
 mod common;
+
+use core::Miner;
+use core::config::{GrinMinerPluginConfig, MinerConfig};
+use core::types::Algorithm;
+
+pub enum TargetMiner {
+	Cuckoo(cuckoo::CuckooMiner),
+	RandomX(randomx::RxMiner),
+}
 
 pub struct MinerWorld {
 	// You can use this struct for mutable context in scenarios.
 	pub plugin: String,
 	pub time_in_seconds: Option<i64>,
+	pub algorithm: Algorithm,
+	pub miner: Option<TargetMiner>,
 }
 
 impl cucumber_rust::World for MinerWorld {}
@@ -17,12 +30,15 @@ impl std::default::Default for MinerWorld {
 		MinerWorld {
 			plugin: String::new(),
 			time_in_seconds: None,
+			algorithm: Algorithm::Cuckoo,
+			miner: None
 		}
 	}
 }
 
 mod miner_test {
 
+	use super::*;
 	use common::{mine_async_for_duration, mining_plugin_dir_for_tests};
 	use cuckoo::PluginConfig;
 	// Any type that implements cucumber_rust::World + Default can be the world
@@ -35,14 +51,41 @@ mod miner_test {
             
         };
 
+		given regex r"I choose <([a-zA-Z0-9]+)> algorithm" |world, matches, _step| {
+			let algo: String = matches[1].clone().parse().unwrap();
+			let mut miner_config: MinerConfig = MinerConfig::default();
+
+			match algo.as_str() {
+				"randomx" => {
+					world.miner = Some(TargetMiner::RandomX(randomx::RxMiner::new(&miner_config)));
+				},
+				"cuckoo" => {
+					//let plugin = PluginConfig::new(mining_plugin_dir_for_tests(), &world.plugin).unwrap();
+					miner_config.miner_plugin_dir = Some(mining_plugin_dir_for_tests());
+					miner_config.miner_plugin_config = vec![GrinMinerPluginConfig{ plugin_name: world.plugin.clone(), ..Default::default()}];
+					world.miner = Some(TargetMiner::Cuckoo(cuckoo::CuckooMiner::new(&miner_config)));
+				},
+				_ => {
+					panic!("Algorithm not supported");
+				}
+			}
+		};
+
         then regex r"Mine async for the duration of <(.*)> seconds" |world, matches, _step| {
             println!("I'll execute the async mining!");
             world.time_in_seconds = Some(matches[1].clone().parse().unwrap());
-            let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), &world.plugin).unwrap();
-            config.params.nthreads = 4;
-            mine_async_for_duration(&vec![config], world.time_in_seconds.unwrap());
-        };
 
+			if let Some(ref mut miner) = &mut world.miner {
+				match miner {
+					TargetMiner::Cuckoo(ref mut m) => {
+						mine_async_for_duration(m, world.time_in_seconds.unwrap());
+					},
+					TargetMiner::RandomX(ref mut m) => {
+						mine_async_for_duration(m, world.time_in_seconds.unwrap());
+					}
+				}
+			}
+        };
     });
 }
 

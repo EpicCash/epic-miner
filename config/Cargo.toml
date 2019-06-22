@@ -16,3 +16,4 @@ dirs = "1.0"
 cuckoo_miner = { path = "../cuckoo-miner", version = "1.0.2" }
 slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
 grin_miner_util = { path = "../util", version = "1.0.2" }
+grin_miner_core = { path = "../core", version = "0.1.0" }
