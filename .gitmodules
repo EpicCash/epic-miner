@@ -1,3 +1,6 @@
 [submodule "cuckoo-miner/src/cuckoo_sys/plugins/cuckoo"]
 	path = cuckoo-miner/src/cuckoo_sys/plugins/cuckoo
 	url = https://github.com/tromp/cuckoo.git
+[submodule "randomx-rust"]
+	path = randomx-rust
+	url = ../../edna/randomx-rust.git

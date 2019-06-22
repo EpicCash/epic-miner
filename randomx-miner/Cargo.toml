@@ -9,4 +9,4 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 
 grin_miner_core = { path = "../core", version = "0.1.0" }
 grin_miner_util = { path = "../util", version = "1.0.2" }
-randomx = { path = "../../randomx", version = "0.1.0" }
+randomx = { path = "../randomx-rust", version = "0.1.0" }
