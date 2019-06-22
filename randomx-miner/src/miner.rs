@@ -98,19 +98,13 @@ impl RxMiner {
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
-
-			let start = timestamp();
 			let mut header = header.1;
+	
+			let start = timestamp();
 			let results = (0..MAX_HASHS)
-				.map(|x| calculate(vm, &mut header, nonce + x))
-				.collect::<Vec<U256>>();
+				.map(|x| calculate(vm, &mut header, nonce + x)).collect::<Vec<U256>>();
 			let end = timestamp();
 			let elapsed = end - start;
-
-			//println!("result: {:?}", results);
-			//println!("elapsed {}", elapsed);
-			//println!("difficulty {}", target_difficulty);
-			//println!("hash {} per seconds", results.len() / elapsed);
 
 			iter_count += 1;
 			let still_valid = { height == shared_data.read().unwrap().height };
