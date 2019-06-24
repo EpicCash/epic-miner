@@ -102,7 +102,7 @@ impl RxMiner {
 	
 			let start = timestamp();
 			let results = (0..MAX_HASHS)
-				.map(|x| calculate(vm, &mut header, nonce + x)).collect::<Vec<U256>>();
+				.map(|x| calculate(&vm, &mut header, nonce + x)).collect::<Vec<U256>>();
 			let end = timestamp();
 			let elapsed = end - start;
 
