@@ -3,4 +3,4 @@
 	url = https://github.com/tromp/cuckoo.git
 [submodule "randomx-rust"]
 	path = randomx-rust
-	url = ../../edna/randomx-rust.git
+	url = ../randomx-rust.git
