@@ -62,6 +62,7 @@ impl PpMiner {
 		let mut iter_count = 0;
 		let mut paused = true;
 		let mut gpu = PpGPU::new();
+
 		gpu.init();
 
 		loop {
@@ -86,15 +87,17 @@ impl PpMiner {
 
 			let header_pre =
 				util::from_hex_string({ shared_data.read().unwrap().pre_nonce.clone() }.as_str());
-			//let header_post = { shared_data.read().unwrap().post_nonce.clone() };
+
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
-			let header = [0u8; 32];
+			
+			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
+			let target = (boundary >> 192).as_u64();
+			let mut header = [0u8; 32];
 
-			//keccak_256(&header_pre, &mut header);
-			println!("header: {:?}", header);
-			gpu.compute(header, height, (height / 30000) as i32, target_difficulty);
+			keccak_256(&header_pre, &mut header);
+			gpu.compute(header, height, (height / 30000) as i32, target);
 
 			iter_count += 1;
 			let still_valid = { height == shared_data.read().unwrap().height };
@@ -122,6 +125,7 @@ impl PpMiner {
 				stats.set_plugin_name(ALGORITHM_NAME);
 				s.stats[instance] = stats;
 			}
+
 			thread::sleep(time::Duration::from_micros(100));
 		}
 
