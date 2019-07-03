@@ -56,7 +56,7 @@ optional = true
 
 [dependencies.progpow]
 version = "0.1.0"
-path = "../progpow-rs"
+path = "./progpow-rust"
 features = ["gpu"]
 
 [build-dependencies]

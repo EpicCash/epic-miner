@@ -10,4 +10,4 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 
 grin_miner_core = { path = "../core", version = "0.1.0" }
 grin_miner_util = { path = "../util", version = "1.0.2" }
-progpow = { path = "../../progpow-rs", version = "0.1.0" }
+progpow = { path = "../progpow-rust", version = "0.1.0" }
