@@ -43,7 +43,9 @@ cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
 ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.2", optional = true}
 randomx = { path = "./randomx-rust", version = "0.1.0" }
+progpow = { path = "../progpow-rs", version = "0.1.0" }
 randomx_miner = { path = "./randomx-miner", version = "0.1.0" }
+progpow_miner = { path = "./progpow-miner", version = "0.1.0" } 
 
 [[test]]
 name = "cucumber"

@@ -18,9 +18,9 @@
 extern crate cuckoo_miner as cuckoo;
 extern crate time;
 
+use self::cuckoo::PluginConfig;
 use core::config::MinerConfig;
 use core::Miner;
-use self::cuckoo::PluginConfig;
 use std;
 use std::env;
 use std::path::PathBuf;
@@ -62,7 +62,8 @@ pub fn mining_plugin_dir_for_tests() -> PathBuf {
 
 // Helper function, tests a particular miner implementation against a known set
 pub fn mine_async_for_duration<T>(miner: &mut T, duration_in_seconds: i64)
-	where T: Miner
+where
+	T: Miner,
 {
 	let stat_check_interval = 3;
 	let mut deadline = time::get_time().sec + duration_in_seconds;

@@ -1,18 +1,20 @@
 #[macro_use]
 extern crate cucumber_rust;
 extern crate cuckoo_miner as cuckoo;
-extern crate randomx_miner as randomx;
-extern crate rand;
 extern crate grin_miner_core as core;
+extern crate progpow_miner as progpow;
+extern crate rand;
+extern crate randomx_miner as randomx;
 mod common;
 
-use core::Miner;
 use core::config::{GrinMinerPluginConfig, MinerConfig};
 use core::types::Algorithm;
+use core::Miner;
 
 pub enum TargetMiner {
 	Cuckoo(cuckoo::CuckooMiner),
 	RandomX(randomx::RxMiner),
+	ProgPow(progpow::PpMiner),
 }
 
 pub struct MinerWorld {
@@ -31,7 +33,7 @@ impl std::default::Default for MinerWorld {
 			plugin: String::new(),
 			time_in_seconds: None,
 			algorithm: Algorithm::Cuckoo,
-			miner: None
+			miner: None,
 		}
 	}
 }
@@ -48,7 +50,6 @@ mod miner_test {
             let plugin = matches[1].clone();
             world.plugin = plugin.as_str().to_lowercase();
             println!("I'll execute the plugin:{}", world.plugin);
-            
         };
 
 		given regex r"I choose <([a-zA-Z0-9]+)> algorithm" |world, matches, _step| {
@@ -56,6 +57,9 @@ mod miner_test {
 			let mut miner_config: MinerConfig = MinerConfig::default();
 
 			match algo.as_str() {
+				"progpow" => {
+					world.miner = Some(TargetMiner::ProgPow(progpow::PpMiner::new(&miner_config)));
+				},
 				"randomx" => {
 					world.miner = Some(TargetMiner::RandomX(randomx::RxMiner::new(&miner_config)));
 				},
@@ -67,7 +71,7 @@ mod miner_test {
 				},
 				_ => {
 					panic!("Algorithm not supported");
-				}
+				},
 			}
 		};
 
@@ -81,6 +85,9 @@ mod miner_test {
 						mine_async_for_duration(m, world.time_in_seconds.unwrap());
 					},
 					TargetMiner::RandomX(ref mut m) => {
+						mine_async_for_duration(m, world.time_in_seconds.unwrap());
+					}
+					TargetMiner::ProgPow(ref mut m) => {
 						mine_async_for_duration(m, world.time_in_seconds.unwrap());
 					}
 				}

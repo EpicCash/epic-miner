@@ -37,10 +37,10 @@ log_file_append = true
 [mining]
 
 # Cuckoo, RandomX, ProgPow
-algorithm = "RandomX"
+algorithm = "ProgPow"
 
 # how many cpu core the mine will use(RandomX)
-cpu_threads = 2
+cpu_threads = 1
 
 # whether to run the tui
 run_tui = true
