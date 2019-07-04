@@ -4,6 +4,8 @@ use std::thread;
 use std::time;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+use keccak_hash::keccak_256;
+
 use core::config::MinerConfig;
 use core::errors::MinerError;
 use core::miner::Miner;
@@ -12,10 +14,12 @@ use core::util;
 use core::{ControlMessage, JobSharedData, JobSharedDataType, Solution, Stats};
 
 use bigint::uint::U256;
-use randomx::{calculate, RxState};
 use util::LOGGER;
 
-const MAX_HASHS: u64 = 100;
+use progpow::hardware::PpGPU;
+use progpow::types::PpCompute;
+
+const ALGORITHM_NAME: &str = "progpow";
 
 fn timestamp() -> u64 {
 	let start = SystemTime::now();
@@ -25,14 +29,9 @@ fn timestamp() -> u64 {
 	since_the_epoch.as_millis() as u64
 }
 
-pub struct RxMiner {
+pub struct PpMiner {
 	/// Data shared across threads
 	pub shared_data: Arc<RwLock<JobSharedData>>,
-
-	cpu_threads: u8,
-
-	// randomx mining state
-	state: Arc<RwLock<RxState>>,
 
 	/// Job control tx
 	control_txs: Vec<mpsc::Sender<ControlMessage>>,
@@ -44,13 +43,12 @@ pub struct RxMiner {
 	solver_stopped_rxs: Vec<mpsc::Receiver<ControlMessage>>,
 }
 
-unsafe impl Send for RxMiner {}
-unsafe impl Sync for RxMiner {}
+unsafe impl Send for PpMiner {}
+unsafe impl Sync for PpMiner {}
 
-impl RxMiner {
+impl PpMiner {
 	fn solver_thread(
 		instance: usize,
-		state: Arc<RwLock<RxState>>,
 		shared_data: JobSharedDataType,
 		control_rx: mpsc::Receiver<ControlMessage>,
 		solver_loop_rx: mpsc::Receiver<ControlMessage>,
@@ -58,18 +56,14 @@ impl RxMiner {
 	) {
 		{
 			let mut s = shared_data.write().unwrap();
-			s.stats[instance].set_plugin_name("randomx_cpu");
+			s.stats[instance].set_plugin_name(ALGORITHM_NAME);
 		}
 
 		let mut iter_count = 0;
 		let mut paused = true;
+		let mut gpu = PpGPU::new();
 
-		let vm = {
-			unsafe {
-				let mut rx = state.write().unwrap();
-				rx.create_vm().unwrap()
-			}
-		};
+		gpu.init();
 
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
@@ -88,52 +82,50 @@ impl RxMiner {
 			}
 			{
 				let mut s = shared_data.write().unwrap();
-				s.stats[instance].set_plugin_name("randomx_cpu");
+				s.stats[instance].set_plugin_name(ALGORITHM_NAME);
 			}
 
-			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
-			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
+			let header_pre =
+				util::from_hex_string({ shared_data.read().unwrap().pre_nonce.clone() }.as_str());
+
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
-			let header = util::get_next_header_data(&header_pre, &header_post);
-			let nonce = header.0;
-			let mut header = header.1;
+			
+			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
+			let target = (boundary >> 192).as_u64();
+			let mut header = [0u8; 32];
 
-			let start = timestamp();
-			let results = (0..MAX_HASHS)
-				.map(|x| calculate(&vm, &mut header, nonce + x))
-				.collect::<Vec<U256>>();
-			let end = timestamp();
-			let elapsed = end - start;
+			keccak_256(&header_pre, &mut header);
+			gpu.compute(header, height, (height / 30000) as i32, target);
 
 			iter_count += 1;
 			let still_valid = { height == shared_data.read().unwrap().height };
 			if still_valid {
 				let mut s = shared_data.write().unwrap();
 
-				for i in 0..results.len() {
-					let hash = results[i];
-					if hash.low_u64() >= target_difficulty {
-						s.solutions.push(Solution::new(
-							job_id as u64,
-							nonce + i as u64,
-							AlgorithmParams::RandomX(hash.into()),
-						));
-						break;
-					}
+				let solutions = gpu.get_solutions();
+
+				if let Some(solution) = solutions {
+					let (nonce, mix) = solution;
+					s.solutions.push(Solution::new(
+						job_id as u64,
+						nonce,
+						AlgorithmParams::ProgPow(mix),
+					));
 				}
 
 				let mut stats = Stats {
-					last_start_time: start,
+					/*last_start_time: start,
 					last_end_time: end,
 					last_solution_time: end,
-					iterations: iter_count.clone(),
+					iterations: iter_count.clone(),*/
 					..Default::default()
 				};
-				stats.set_plugin_name("randomx_cpu");
+				stats.set_plugin_name(ALGORITHM_NAME);
 				s.stats[instance] = stats;
 			}
+
 			thread::sleep(time::Duration::from_micros(100));
 		}
 
@@ -141,40 +133,18 @@ impl RxMiner {
 	}
 }
 
-impl Miner for RxMiner {
-	fn new(configs: &MinerConfig) -> RxMiner {
-		let mut rx_state = RxState::new();
-		rx_state.full_mem = true;
-		rx_state.hard_aes = true;
-		rx_state.jit_compiler = true;
-		RxMiner {
-			state: Arc::new(RwLock::new(rx_state)),
-			shared_data: Arc::new(RwLock::new(JobSharedData::new(
-				configs.cpu_threads as usize,
-			))),
+impl Miner for PpMiner {
+	fn new(configs: &MinerConfig) -> PpMiner {
+		PpMiner {
+			shared_data: Arc::new(RwLock::new(JobSharedData::new(1))),
 			control_txs: vec![],
 			solver_loop_txs: vec![],
 			solver_stopped_rxs: vec![],
-			cpu_threads: configs.cpu_threads,
 		}
 	}
 
 	fn start_solvers(&mut self) -> Result<(), MinerError> {
-		let s = self.state.clone();
-		let cpu_threads = self.cpu_threads.clone();
-
-		let th = thread::spawn(move || {
-			let mut rx = s.write().unwrap();
-			unsafe {
-				rx.init_cache(&[0; 32], false).expect("hahaha");
-				rx.init_dataset(cpu_threads).expect("heuheuehu");
-			}
-		});
-
-		th.join();
-
-		for i in 0..(cpu_threads as usize) {
-			let state = self.state.clone();
+		for i in 0..1 {
 			let shared_data = self.shared_data.clone();
 
 			let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
@@ -186,9 +156,8 @@ impl Miner for RxMiner {
 			self.solver_stopped_rxs.push(solver_stopped_rx);
 
 			thread::spawn(move || {
-				let _ = RxMiner::solver_thread(
+				let _ = PpMiner::solver_thread(
 					i,
-					state,
 					shared_data,
 					control_rx,
 					solver_rx,

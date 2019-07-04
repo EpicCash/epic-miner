@@ -10,7 +10,8 @@ pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Algorithm {
     Cuckoo,
-    RandomX
+    RandomX,
+	ProgPow,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +21,9 @@ pub enum AlgorithmParams {
 
     // hash
 	RandomX([u8; 32]),
+
+	// mixHash
+	ProgPow([u8; 32])
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

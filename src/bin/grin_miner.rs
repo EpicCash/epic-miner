@@ -16,6 +16,7 @@
 //! grin node
 extern crate cuckoo_miner as cuckoo;
 extern crate randomx_miner as randomx;
+extern crate progpow_miner as progpow;
 
 extern crate grin_miner_config as config;
 extern crate grin_miner_plugin as plugin;
@@ -239,6 +240,7 @@ fn main() {
 	debug!(LOGGER, "Starting solvers");
 
 	match mining_config.algorithm.clone().unwrap() {
+		Algorithm::ProgPow => start_miner(progpow::PpMiner::new(&mining_config), &mining_config),
 		Algorithm::RandomX => start_miner(randomx::RxMiner::new(&mining_config), &mining_config),//randomx::RxMiner::new(&mining_config),
 		Algorithm::Cuckoo => start_miner(cuckoo::CuckooMiner::new(&mining_config), &mining_config),
 	}
