@@ -100,6 +100,8 @@ impl RxMiner {
 			let nonce = header.0;
 			let mut header = header.1;
 
+			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
+
 			let start = timestamp();
 			let results = (0..MAX_HASHS)
 				.map(|x| calculate(&vm, &mut header, nonce + x))
@@ -114,7 +116,7 @@ impl RxMiner {
 
 				for i in 0..results.len() {
 					let hash = results[i];
-					if hash.low_u64() >= target_difficulty {
+					if hash <= boundary {
 						s.solutions.push(Solution::new(
 							job_id as u64,
 							nonce + i as u64,

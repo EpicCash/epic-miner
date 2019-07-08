@@ -93,7 +93,7 @@ impl PpMiner {
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 			
 			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
-			let target = (boundary >> 192).as_u64();
+			let target = boundary.low_u64();
 			let mut header = [0u8; 32];
 
 			keccak_256(&header_pre, &mut header);
