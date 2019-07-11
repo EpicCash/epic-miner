@@ -86,6 +86,12 @@ impl GlobalConfig {
 				return Ok(());
 			}
 		}
+        // Then look in /etc/grin-miner.toml
+        let config_path = PathBuf::from(r"/etc/grin-miner.toml");
+        if config_path.exists() {
+            self.config_file_path = Some(config_path);
+            return Ok(());
+        }
 
 		// Give up
 		Err(ConfigError::FileNotFoundError(String::from("")))

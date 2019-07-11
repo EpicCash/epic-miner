@@ -1,0 +1,58 @@
+#!/usr/bin/make -f
+
+PATH := $(HOME)/.cargo/bin:$(PATH)
+ROOTDIR := debian/epic-miner
+
+.PHONY: clean
+clean: debian/control build/rustup
+	dh_clean
+	cargo clean
+	rm build/stamp -rf
+	mkdir -p build
+
+.ONESHELL:
+build/stamp: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+	cargo build --release
+	cd ocl_cuckaroo
+	cargo build --release
+	cd ..
+	cd ocl_cuckatoo
+	cargo build --release
+	cd ..
+	mkdir -p build
+	touch $(@)
+
+.PHONY: build build-arch build-indep
+build build-arch build-indep: build/stamp
+
+.ONESHELL:
+build/rustup:
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	rustup default 1.35.0
+
+.PHONY: binary binary-arch binary-indep
+binary binary-arch binary-indep: build/stamp debian/control
+	dh_testroot
+	dh_prep
+	cargo install --path . --root $(ROOTDIR)/usr/
+	strip $(ROOTDIR)/usr/bin/grin-miner
+	mkdir -p $(ROOTDIR)/usr/lib/
+	mkdir -p $(ROOTDIR)/etc/
+	cp grin-miner.toml $(ROOTDIR)/etc/grin-miner.toml
+	find target/release -iname libppow.so -exec cp "{}" $(ROOTDIR)/usr/lib/libppow.so \;
+	strip $(ROOTDIR)/usr/lib/libppow.so
+	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckaroo.so \;
+	strip $(ROOTDIR)/usr/lib/libocl_cuckaroo.so
+	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckatoo.so \;
+	strip $(ROOTDIR)/usr/lib/libocl_cuckatoo.so
+	mkdir -p $(ROOTDIR)/usr/bin/plugins/
+	find target/release/plugins -iname '*.cuckooplugin' -exec cp "{}" $(ROOTDIR)/usr/bin/plugins/
+	rm $(ROOTDIR)/usr/.crates.toml
+	dh_installdocs
+	dh_installchangelogs
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
