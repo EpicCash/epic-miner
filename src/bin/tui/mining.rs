@@ -26,7 +26,7 @@ use cursive::Cursive;
 use tui::constants::*;
 use tui::types::*;
 
-use core::Stats;
+use core::{Stats, Algorithm};
 use stats;
 use tui::table::{TableView, TableViewItem};
 
@@ -39,6 +39,7 @@ enum MiningDeviceColumn {
 	ErrorStatus,
 	LastGraphTime,
 	GraphsPerSecond,
+	HashsPerSecond,
 }
 
 impl MiningDeviceColumn {
@@ -51,6 +52,7 @@ impl MiningDeviceColumn {
 			MiningDeviceColumn::ErrorStatus => "Status",
 			MiningDeviceColumn::LastGraphTime => "Last Graph Time",
 			MiningDeviceColumn::GraphsPerSecond => "GPS",
+			MiningDeviceColumn::HashsPerSecond => "HPS",
 		}
 	}
 }
@@ -73,6 +75,9 @@ impl TableViewItem<MiningDeviceColumn> for Stats {
 			MiningDeviceColumn::GraphsPerSecond => {
 				String::from(format!("{:.*}", 4, 1.0 / last_solution_time_secs))
 			}
+			MiningDeviceColumn::HashsPerSecond => { 
+				String::from(format!("{:?}", self.hashes_per_sec))
+			}
 		}
 	}
 
@@ -94,12 +99,81 @@ impl TableViewItem<MiningDeviceColumn> for Stats {
 				self.last_solution_time.cmp(&other.last_solution_time)
 			}
 			MiningDeviceColumn::GraphsPerSecond => gps_self.partial_cmp(&gps_other).unwrap(),
+			MiningDeviceColumn::HashsPerSecond => self.hashes_per_sec.cmp(&other.hashes_per_sec),
 		}
 	}
 }
 
 /// Mining status view
 pub struct TUIMiningView;
+
+impl TUIMiningView {
+	pub fn create_algorithm(algorithm: Algorithm) -> Box<View> {
+		let table_view = {
+			let mut table = TableView::<Stats, MiningDeviceColumn>::new()
+				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
+					c.width_percent(20)
+				}).column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
+					c.width_percent(5)
+				}).column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
+					c.width_percent(20)
+				}).column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
+				.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
+					c.width_percent(8)
+				});
+
+			match algorithm {
+				Algorithm::Cuckoo => { 
+					table.column(MiningDeviceColumn::LastGraphTime, "Graph Time", |c| {
+						c.width_percent(10)
+					}).column(MiningDeviceColumn::GraphsPerSecond, "GPS", |c| {
+						c.width_percent(10)
+					})
+				}
+				_ => {
+					table.column(MiningDeviceColumn::HashsPerSecond, "HPS", |c| {
+						c.width_percent(20)
+					})
+				}
+			}
+		};
+
+		let status_view =
+			LinearLayout::new(Orientation::Vertical)
+				.child(LinearLayout::new(Orientation::Horizontal).child(
+					TextView::new("Connection Status: Starting...").with_id("mining_server_status"),
+				)).child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Mining Status: ").with_id("mining_status")),
+				).child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("  ").with_id("network_info")),
+				).child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("  ").with_id("mining_statistics")),
+				).child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
+				).child(LinearLayout::new(Orientation::Horizontal).child(
+				TextView::new("Last Message Received:  ").with_id("last_message_received"),
+				));
+
+		let mining_device_view = LinearLayout::new(Orientation::Vertical)
+			.child(status_view)
+			.child(BoxView::with_full_screen(
+				Dialog::around(table_view.with_id(TABLE_MINING_STATUS).min_size((50, 20)))
+					.title("Mining Devices"),
+			)).with_id("mining_device_view");
+
+		let view_stack = StackView::new()
+			.layer(mining_device_view)
+			.with_id("mining_stack_view");
+
+		let mining_view = LinearLayout::new(Orientation::Vertical).child(view_stack);
+
+		Box::new(mining_view.with_id(VIEW_MINING))
+	}
+}
 
 impl TUIStatusListener for TUIMiningView {
 	/// Create the mining view
@@ -183,7 +257,7 @@ impl TUIStatusListener for TUIMiningView {
 							mining_stats.block_height, 4, mining_stats.combined_gps()
 						),
 						format!(
-							"Cuck(at)oo - Target Share Difficulty {}",
+							"Target Share Difficulty {}",
 							mining_stats.target_difficulty.to_string()
 						),
 					)

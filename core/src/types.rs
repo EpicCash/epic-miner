@@ -50,6 +50,7 @@ pub struct Stats {
 	pub last_start_time: u64,
 	pub last_end_time: u64,
 	pub last_solution_time: u64,
+	pub hashes_per_sec: u64,
 }
 
 impl Default for Stats {
@@ -65,6 +66,7 @@ impl Default for Stats {
 			last_start_time: 0,
 			last_end_time: 0,
 			last_solution_time: 0,
+			hashes_per_sec: 0,
 		}
 	}
 }
@@ -103,6 +105,13 @@ impl Stats {
 		let c_vec = CString::new(name).unwrap().into_bytes();
 		for i in 0..c_vec.len() {
 			self.plugin_name[i] = c_vec[i];
+		}
+	}
+
+	pub fn set_device_name(&mut self, name: &str) {
+		let c_vec = CString::new(name).unwrap().into_bytes();
+		for i in 0..c_vec.len() {
+			self.device_name[i] = c_vec[i];
 		}
 	}
 }

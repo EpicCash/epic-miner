@@ -325,7 +325,8 @@ impl Miner for CuckooMiner {
 				iterations: i.iterations,
 				last_start_time: i.last_start_time,
 				last_end_time: i.last_end_time,
-				last_solution_time: i.last_solution_time
+				last_solution_time: i.last_solution_time,
+				hashes_per_sec: 0,
 			});
 		}
 

@@ -94,12 +94,14 @@ mod with_tui {
 	use types;
 	use stats;
 	use tui::ui;
+	use core::Algorithm;
 
     pub fn start_tui(
 	    s: Arc<RwLock<stats::Stats>>,
 	    client_tx: mpsc::Sender<types::ClientMessage>,
 	    miner_tx: mpsc::Sender<types::MinerMessage>,
 	    stop: Arc<AtomicBool>,
+		algorithm: Algorithm,
     ) {
 	    // Run the UI controller.. here for now for simplicity to access
 	    // everything it might need
@@ -108,7 +110,7 @@ mod with_tui {
 	    let _ = thread::Builder::new()
 		    .name("ui".to_string())
 		    .spawn(move || {
-			    let mut controller = ui::Controller::new().unwrap_or_else(|e| {
+			    let mut controller = ui::Controller::new(algorithm).unwrap_or_else(|e| {
 				    panic!("Error loading UI controller: {}", e);
 			    });
 			    controller.run(s.clone());
@@ -162,6 +164,7 @@ where
 			cc.tx.clone(),
 			mc.tx.clone(),
 			tui_stopped.clone(),
+			mining_config.algorithm.clone().unwrap(),
 		);
 
         #[cfg(not(feature="tui"))]
