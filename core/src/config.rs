@@ -2,6 +2,12 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use types::Algorithm;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuConfig {
+	pub device: u32,
+	pub driver: u8,
+}
+
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrinMinerPluginConfig {
@@ -49,12 +55,15 @@ pub struct MinerConfig {
 
 	/// Cuckoo miner plugin configuration, one for each plugin
 	pub miner_plugin_config: Vec<GrinMinerPluginConfig>,
+
+	// gpu devices
+	pub gpu_config: Vec<GpuConfig>,
 }
 
 impl Default for MinerConfig {
 	fn default() -> MinerConfig {
 		MinerConfig {
-			algorithm: Some(Algorithm::RandomX),
+			algorithm: Some(Algorithm::Cuckoo),
 			cpu_threads: 1,
 			run_tui: false,
 			miner_plugin_dir: None,
@@ -63,6 +72,7 @@ impl Default for MinerConfig {
 			stratum_server_login: None,
 			stratum_server_password: None,
 			stratum_server_tls_enabled: None,
+			gpu_config: vec![],
 		}
 	}
 }

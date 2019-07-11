@@ -6,7 +6,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use keccak_hash::keccak_256;
 
-use core::config::MinerConfig;
+use core::config::{MinerConfig, GpuConfig};
 use core::errors::MinerError;
 use core::miner::Miner;
 use core::types::AlgorithmParams;
@@ -20,6 +20,9 @@ use progpow::hardware::PpGPU;
 use progpow::types::PpCompute;
 
 const ALGORITHM_NAME: &str = "progpow";
+const GLOBAL_WORK_SIZE: u64 = 2048;
+const LOCAL_WORK_SIZE: u64 = 256;
+const WORK_PER_CALL: u64 = GLOBAL_WORK_SIZE * LOCAL_WORK_SIZE;
 
 fn timestamp() -> u64 {
 	let start = SystemTime::now();
@@ -32,6 +35,8 @@ fn timestamp() -> u64 {
 pub struct PpMiner {
 	/// Data shared across threads
 	pub shared_data: Arc<RwLock<JobSharedData>>,
+
+	pub gpus: Vec<GpuConfig>,
 
 	/// Job control tx
 	control_txs: Vec<mpsc::Sender<ControlMessage>>,
@@ -49,6 +54,7 @@ unsafe impl Sync for PpMiner {}
 impl PpMiner {
 	fn solver_thread(
 		instance: usize,
+		config: GpuConfig,
 		shared_data: JobSharedDataType,
 		control_rx: mpsc::Receiver<ControlMessage>,
 		solver_loop_rx: mpsc::Receiver<ControlMessage>,
@@ -59,10 +65,11 @@ impl PpMiner {
 			s.stats[instance].set_plugin_name(ALGORITHM_NAME);
 		}
 
+		let mut last_solution_time = 0;
 		let mut iter_count = 0;
 		let mut paused = true;
-		let mut gpu = PpGPU::new();
 
+		let mut gpu = PpGPU::new(config.device, config.driver);
 		gpu.init();
 
 		loop {
@@ -91,22 +98,25 @@ impl PpMiner {
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
-			
+
 			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
 			let target = boundary.low_u64();
 			let mut header = [0u8; 32];
 
 			keccak_256(&header_pre, &mut header);
-			gpu.compute(header, height, (height / 30000) as i32, target);
 
-			iter_count += 1;
+			let start = timestamp();
+			gpu.compute(header, height, (height / 30000) as i32, target);
+			let end = timestamp();
+
+			iter_count += WORK_PER_CALL;
 			let still_valid = { height == shared_data.read().unwrap().height };
 			if still_valid {
 				let mut s = shared_data.write().unwrap();
-
 				let solutions = gpu.get_solutions();
 
 				if let Some(solution) = solutions {
+					last_solution_time = timestamp();
 					let (nonce, mix) = solution;
 					s.solutions.push(Solution::new(
 						job_id as u64,
@@ -116,17 +126,17 @@ impl PpMiner {
 				}
 
 				let mut stats = Stats {
-					/*last_start_time: start,
+					last_start_time: start,
 					last_end_time: end,
-					last_solution_time: end,
-					iterations: iter_count.clone(),*/
+					last_solution_time: last_solution_time,
+					iterations: iter_count as u32,
+					hashes_per_sec: (WORK_PER_CALL * 1000) / (end-start),
 					..Default::default()
 				};
+ 
 				stats.set_plugin_name(ALGORITHM_NAME);
 				s.stats[instance] = stats;
 			}
-
-			thread::sleep(time::Duration::from_micros(100));
 		}
 
 		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
@@ -135,8 +145,10 @@ impl PpMiner {
 
 impl Miner for PpMiner {
 	fn new(configs: &MinerConfig) -> PpMiner {
+		let count = configs.gpu_config.len();
 		PpMiner {
-			shared_data: Arc::new(RwLock::new(JobSharedData::new(1))),
+			shared_data: Arc::new(RwLock::new(JobSharedData::new(count))),
+			gpus: configs.gpu_config.clone(),
 			control_txs: vec![],
 			solver_loop_txs: vec![],
 			solver_stopped_rxs: vec![],
@@ -144,9 +156,9 @@ impl Miner for PpMiner {
 	}
 
 	fn start_solvers(&mut self) -> Result<(), MinerError> {
-		for i in 0..1 {
+		for i in 0..self.gpus.len() {
+			let config = self.gpus[i].clone();
 			let shared_data = self.shared_data.clone();
-
 			let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
 			let (solver_tx, solver_rx) = mpsc::channel::<ControlMessage>();
 			let (solver_stopped_tx, solver_stopped_rx) = mpsc::channel::<ControlMessage>();
@@ -158,6 +170,7 @@ impl Miner for PpMiner {
 			thread::spawn(move || {
 				let _ = PpMiner::solver_thread(
 					i,
+					config,
 					shared_data,
 					control_rx,
 					solver_rx,
@@ -170,7 +183,12 @@ impl Miner for PpMiner {
 	}
 
 	fn get_solutions(&self) -> Option<Vec<Solution>> {
-		Some(self.shared_data.read().unwrap().solutions.clone())
+		let mut s = self.shared_data.write().unwrap();
+
+		let solutions = s.solutions.clone();
+		s.solutions.clear();
+
+		Some(solutions)
 	}
 
 	fn get_stats(&self) -> Result<Vec<Stats>, MinerError> {

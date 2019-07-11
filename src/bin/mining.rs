@@ -20,9 +20,9 @@ use time;
 use util::LOGGER;
 use {config, stats, types};
 
-use core::{Miner, Stats, AlgorithmParams};
 use core::config::MinerConfig;
 use core::errors::MinerError;
+use core::{Algorithm, AlgorithmParams, Miner, Stats};
 
 pub struct Controller {
 	_config: MinerConfig,
@@ -62,9 +62,9 @@ impl Controller {
 	}
 
 	/// Run the mining controller, solvers in miner should already be going
-	pub fn run<T>(&mut self, mut miner: T) -> Result<(), MinerError> 
+	pub fn run<T>(&mut self, mut miner: T) -> Result<(), MinerError>
 	where
-		T: Miner
+		T: Miner,
 	{
 		// how often to output stats
 		let stat_output_interval = 2;
@@ -78,7 +78,13 @@ impl Controller {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						miner.notify(self.current_job_id as u32, self.current_height, &pre_pow, "", diff)
+						miner.notify(
+							self.current_job_id as u32,
+							self.current_height,
+							&pre_pow,
+							"",
+							diff,
+						)
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
@@ -106,11 +112,11 @@ impl Controller {
 			if let Some(ss) = solutions {
 				let len = ss.len();
 				for i in ss {
-					let _ =
-						self.client_tx
-							.as_mut()
-							.unwrap()
-							.send(types::ClientMessage::FoundSolution(self.current_height, i));
+					let _ = self
+						.client_tx
+						.as_mut()
+						.unwrap()
+						.send(types::ClientMessage::FoundSolution(self.current_height, i));
 				}
 				let mut s_stats = self.stats.write().unwrap();
 				s_stats.mining_stats.solution_stats.num_solutions_found += len as u32;
@@ -119,7 +125,7 @@ impl Controller {
 		}
 	}
 
-	fn output_job_stats(&mut self, stats: Vec<Stats>) {
+	fn output_cuckoo_job_stats(&mut self, stats: Vec<Stats>) {
 		let mut sps_total = 0.0;
 		let mut i = 0;
 		for s in stats.clone() {
@@ -159,6 +165,7 @@ impl Controller {
 			}
 			i += 1;
 		}
+
 		info!(
 			LOGGER,
 			"Mining: Cuck(at)oo at {} gps (graphs per second)", sps_total
@@ -170,6 +177,29 @@ impl Controller {
 			s_stats.mining_stats.target_difficulty = self.current_target_diff;
 			s_stats.mining_stats.block_height = self.current_height;
 			s_stats.mining_stats.device_stats = stats;
+		}
+	}
+
+	fn output_hashs_job_stats(&mut self, algo: Algorithm, stats: Vec<Stats>) {
+		let hashes_per_sec: u64 = stats.clone().iter().map(|s| s.hashes_per_sec).sum();
+
+		info!(
+			LOGGER,
+			"Mining: {:?} at {} hps (hashes per second)", algo, hashes_per_sec
+		);
+
+		let mut s_stats = self.stats.write().unwrap();
+		s_stats.mining_stats.add_combined_gps(hashes_per_sec as f64);
+		s_stats.mining_stats.target_difficulty = self.current_target_diff;
+		s_stats.mining_stats.block_height = self.current_height;
+		s_stats.mining_stats.device_stats = stats;
+	}
+
+	fn output_job_stats(&mut self, stats: Vec<Stats>) {
+		let algorithm = self._config.algorithm.clone().unwrap();
+		match algorithm {
+			Algorithm::Cuckoo => self.output_cuckoo_job_stats(stats),
+			_ => self.output_hashs_job_stats(algorithm, stats),
 		}
 	}
 }

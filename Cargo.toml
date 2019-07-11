@@ -62,7 +62,7 @@ cursive = "0.12.0"
 [dependencies.progpow]
 version = "0.1.0"
 path = "./progpow-rust"
-features = ["gpu"]
+features = ["gpu", "progpow_gpu"]
 
 [build-dependencies]
 built = "0.2"

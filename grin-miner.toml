@@ -40,7 +40,7 @@ log_file_append = true
 algorithm = "ProgPow"
 
 # how many cpu core the mine will use(RandomX)
-cpu_threads = 1
+cpu_threads = 3
 
 # whether to run the tui
 run_tui = true
@@ -62,6 +62,21 @@ stratum_server_tls_enabled = false
 #to the executable
 
 #miner_plugin_dir = "target/debug/plugins"
+
+###############################################################
+### GPU CONFIGURATION (works just on the progpow)
+###############################################################
+
+# default
+# [[mining.gpu_config]]
+# gpu index
+# device = 0
+# CUDA = 1, OCL = 2
+# driver = "OCL"
+
+[[mining.gpu_config]]
+device = 0
+driver = 2
 
 ###############################################################
 ### CUCKAROO (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###

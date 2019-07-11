@@ -16,6 +16,7 @@ use randomx::{calculate, RxState};
 use util::LOGGER;
 
 const MAX_HASHS: u64 = 100;
+const ALGORITHM_NAME: &str = "randomx";
 
 fn timestamp() -> u64 {
 	let start = SystemTime::now();
@@ -58,10 +59,12 @@ impl RxMiner {
 	) {
 		{
 			let mut s = shared_data.write().unwrap();
-			s.stats[instance].set_plugin_name("randomx_cpu");
+			s.stats[instance].set_plugin_name(ALGORITHM_NAME);
+			s.stats[instance].set_device_name("cpu");
 		}
 
 		let mut iter_count = 0;
+		let mut last_solution_time = 0;
 		let mut paused = true;
 
 		let vm = {
@@ -88,7 +91,7 @@ impl RxMiner {
 			}
 			{
 				let mut s = shared_data.write().unwrap();
-				s.stats[instance].set_plugin_name("randomx_cpu");
+				s.stats[instance].set_plugin_name(ALGORITHM_NAME);
 			}
 
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
@@ -100,43 +103,47 @@ impl RxMiner {
 			let nonce = header.0;
 			let mut header = header.1;
 
-			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
+			let boundary = U256::max_value()
+				/ U256::from(if target_difficulty > 0 {
+					target_difficulty
+				} else {
+					1
+				});
 
 			let start = timestamp();
 			let results = (0..MAX_HASHS)
 				.map(|x| calculate(&vm, &mut header, nonce + x))
 				.collect::<Vec<U256>>();
 			let end = timestamp();
-			let elapsed = end - start;
 
-			iter_count += 1;
+			iter_count += MAX_HASHS;
 			let still_valid = { height == shared_data.read().unwrap().height };
 			if still_valid {
 				let mut s = shared_data.write().unwrap();
 
-				for i in 0..results.len() {
-					let hash = results[i];
-					if hash <= boundary {
-						s.solutions.push(Solution::new(
-							job_id as u64,
-							nonce + i as u64,
-							AlgorithmParams::RandomX(hash.into()),
-						));
-						break;
-					}
+				for (i, hash) in results.iter().enumerate().filter(|(i, &x)| x <= boundary) {
+					last_solution_time = timestamp();
+					s.solutions.push(Solution::new(
+						job_id as u64,
+						nonce + i as u64,
+						AlgorithmParams::RandomX(hash.clone().into()),
+					));
+					break;
 				}
 
 				let mut stats = Stats {
 					last_start_time: start,
 					last_end_time: end,
-					last_solution_time: end,
-					iterations: iter_count.clone(),
+					last_solution_time: last_solution_time,
+					iterations: iter_count as u32,
+					hashes_per_sec: (MAX_HASHS * 1000) / (end - start),
 					..Default::default()
 				};
-				stats.set_plugin_name("randomx_cpu");
+
+				stats.set_plugin_name(ALGORITHM_NAME);
+				stats.set_device_name("cpu");
 				s.stats[instance] = stats;
 			}
-			thread::sleep(time::Duration::from_micros(100));
 		}
 
 		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
@@ -168,8 +175,8 @@ impl Miner for RxMiner {
 		let th = thread::spawn(move || {
 			let mut rx = s.write().unwrap();
 			unsafe {
-				rx.init_cache(&[0; 32], false).expect("hahaha");
-				rx.init_dataset(cpu_threads).expect("heuheuehu");
+				rx.init_cache(&[0; 32], true).expect("Isn't possible initialize RandomX cache!");
+				rx.init_dataset(cpu_threads).expect("Isn't possible initialize RandomX dataset!");
 			}
 		});
 
@@ -203,7 +210,12 @@ impl Miner for RxMiner {
 	}
 
 	fn get_solutions(&self) -> Option<Vec<Solution>> {
-		Some(self.shared_data.read().unwrap().solutions.clone())
+		let mut s = self.shared_data.write().unwrap();
+
+		let solutions = s.solutions.clone();
+		s.solutions.clear();
+
+		Some(solutions)
 	}
 
 	fn get_stats(&self) -> Result<Vec<Stats>, MinerError> {

@@ -33,6 +33,8 @@ use tui::{menu, mining, version};
 use tui::types::*;
 use tui::constants::*;
 
+use core::Algorithm;
+
 use stats;
 
 use built_info;
@@ -59,7 +61,7 @@ fn modify_theme(theme: &mut Theme) {
 
 impl UI {
 	/// Create a new UI
-	pub fn new(controller_tx: mpsc::Sender<ControllerMessage>) -> UI {
+	pub fn new(algorithm: Algorithm, controller_tx: mpsc::Sender<ControllerMessage>) -> UI {
 		let (ui_tx, ui_rx) = mpsc::channel::<UIMessage>();
 		let mut grin_ui = UI {
 			cursive: Cursive::default(),
@@ -69,7 +71,7 @@ impl UI {
 		};
 
 		// Create UI objects, etc
-		let mining_view = mining::TUIMiningView::create();
+		let mining_view = mining::TUIMiningView::create_algorithm(algorithm);
 		let version_view = version::TUIVersionView::create();
 
 		let main_menu = menu::create();
@@ -153,11 +155,11 @@ pub enum ControllerMessage {
 
 impl Controller {
 	/// Create a new controller
-	pub fn new() -> Result<Controller, String> {
+	pub fn new(algo: Algorithm) -> Result<Controller, String> {
 		let (tx, rx) = mpsc::channel::<ControllerMessage>();
 		Ok(Controller {
 			rx: rx,
-			ui: UI::new(tx.clone()),
+			ui: UI::new(algo, tx.clone()),
 		})
 	}
 	/// Run the controller
