@@ -1,5 +1,5 @@
 [package]
-name = "grin_miner_core"
+name = "epic_miner_core"
 version = "0.1.0"
 
 [dependencies]

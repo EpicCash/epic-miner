@@ -10,7 +10,7 @@ pub struct GpuConfig {
 
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GrinMinerPluginConfig {
+pub struct EpicMinerPluginConfig {
 	/// The type of plugin to load (i.e. filters on filename)
 	pub plugin_name: String,
 
@@ -18,9 +18,9 @@ pub struct GrinMinerPluginConfig {
 	pub parameters: Option<HashMap<String, u32>>,
 }
 
-impl Default for GrinMinerPluginConfig {
-	fn default() -> GrinMinerPluginConfig {
-		GrinMinerPluginConfig {
+impl Default for EpicMinerPluginConfig {
+	fn default() -> EpicMinerPluginConfig {
+		EpicMinerPluginConfig {
 			plugin_name: String::new(),
 			parameters: None,
 		}
@@ -54,7 +54,7 @@ pub struct MinerConfig {
 	pub miner_plugin_dir: Option<PathBuf>,
 
 	/// Cuckoo miner plugin configuration, one for each plugin
-	pub miner_plugin_config: Vec<GrinMinerPluginConfig>,
+	pub miner_plugin_config: Vec<EpicMinerPluginConfig>,
 
 	// gpu devices
 	pub gpu_config: Vec<GpuConfig>,

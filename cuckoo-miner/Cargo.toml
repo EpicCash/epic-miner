@@ -4,7 +4,7 @@ version = "1.0.2"
 authors = ["yeastplume"]
 license = "MIT/Apache-2.0/BSD-3-Clause"
 description = "Rust bindings to John Tromp's Cuckoo Cycle Implementations"
-repository = "https://github.com/mimblewimble/grin-miner"
+repository = "https://github.com/mimblewimble/epic-miner"
 readme = "../README.md"
 build = "src/build.rs"
 
@@ -18,9 +18,9 @@ test-avx2 = []
 build-cuda-plugins = []
 
 [dependencies]
-grin_miner_core = { path = "../core", version = "0.1.0" }
-grin_miner_util = { path = "../util", version = "1.0.2" }
-grin_miner_plugin = { path = "../plugin", version = "1.0.2" }
+epic_miner_core = { path = "../core", version = "0.1.0" }
+epic_miner_util = { path = "../util", version = "1.0.2" }
+epic_miner_plugin = { path = "../plugin", version = "1.0.2" }
 time = "^0.1"
 rust-crypto = "0.2.36"
 log = "^0.3"

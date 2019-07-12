@@ -1,9 +1,9 @@
 [package]
-name = "grin_miner_plugin"
+name = "epic_miner_plugin"
 version = "1.0.2"
-authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
-repository = "https://github.com/mimblewimble/grin-miner"
-description = "Device specific plugins for the grin miner"
+authors = ["Epic Developers <mimblewimble@lists.launchpad.net>"]
+repository = "https://github.com/mimblewimble/epic-miner"
+description = "Device specific plugins for the epic miner"
 license = "Apache-2.0"
 workspace = ".."
 

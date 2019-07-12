@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //! Logging, as well as various low-level utilities that factor Rust
-//! patterns that are frequent within the grin codebase.
+//! patterns that are frequent within the epic codebase.
 
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]

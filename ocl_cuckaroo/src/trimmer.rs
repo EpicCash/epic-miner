@@ -492,7 +492,7 @@ fn build_buffer(params: Option<&ClBufferParams>, q: &Queue) -> ocl::Result<Buffe
 }
 
 const SRC: &str = r#"
-// Cuckaroo Cycle, a memory-hard proof-of-work by John Tromp and team Grin
+// Cuckaroo Cycle, a memory-hard proof-of-work by John Tromp and team Epic
 // Copyright (c) 2018 Jiri Photon Vadura and John Tromp
 // This GGM miner file is covered by the FAIR MINING license
 

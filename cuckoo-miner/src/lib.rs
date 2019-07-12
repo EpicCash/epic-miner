@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 //! # Overview
 //!
 //! <b>cuckoo-miner</b> is a Rust wrapper around John Tromp's Cuckoo Miner
-//! C implementations, intended primarily for use in the Grin MimbleWimble
+//! C implementations, intended primarily for use in the Epic MimbleWimble
 //! blockhain development project. However, it is also suitable for use as
 //! a standalone miner or by any other project needing to use the
 //! cuckoo cycle proof of work. cuckoo-miner is plugin based, and provides
@@ -27,9 +27,9 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
-extern crate grin_miner_plugin as plugin;
-extern crate grin_miner_util as util;
-extern crate grin_miner_core as core;
+extern crate epic_miner_plugin as plugin;
+extern crate epic_miner_util as util;
+extern crate epic_miner_core as core;
 
 extern crate serde;
 #[macro_use]

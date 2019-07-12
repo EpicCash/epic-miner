@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ extern crate toml;
 #[macro_use]
 extern crate slog;
 
-extern crate grin_miner_core as core;
-extern crate grin_miner_util as util;
+extern crate epic_miner_core as core;
+extern crate epic_miner_util as util;
 extern crate cuckoo_miner as cuckoo;
 
 mod config;

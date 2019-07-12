@@ -8,6 +8,6 @@ bigint = "4.4.1"
 keccak-hash = "0.2.0"
 slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
 
-grin_miner_core = { path = "../core", version = "0.1.0" }
-grin_miner_util = { path = "../util", version = "1.0.2" }
+epic_miner_core = { path = "../core", version = "0.1.0" }
+epic_miner_util = { path = "../util", version = "1.0.2" }
 progpow = { path = "../progpow-rust", version = "0.1.0" }

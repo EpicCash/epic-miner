@@ -1,9 +1,9 @@
 [package]
-name = "grin_miner_util"
+name = "epic_miner_util"
 version = "1.0.2"
-authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
-description = "Utilities for the grin miner"
-repository = "https://github.com/mimblewimble/grin-miner"
+authors = ["Epic Developers <mimblewimble@lists.launchpad.net>"]
+description = "Utilities for the epic miner"
+repository = "https://github.com/mimblewimble/epic-miner"
 license = "Apache-2.0"
 workspace = ".."
 

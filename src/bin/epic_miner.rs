@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
 // limitations under the License.
 
 //! Stratum client implementation, for standalone mining against a running
-//! grin node
+//! epic node
 extern crate cuckoo_miner as cuckoo;
 extern crate randomx_miner as randomx;
 extern crate progpow_miner as progpow;
 
-extern crate grin_miner_config as config;
-extern crate grin_miner_plugin as plugin;
-extern crate grin_miner_util as util;
-extern crate grin_miner_core as core;
+extern crate epic_miner_config as config;
+extern crate epic_miner_plugin as plugin;
+extern crate epic_miner_util as util;
+extern crate epic_miner_core as core;
 
 extern crate bufstream;
 extern crate native_tls;
@@ -61,7 +61,7 @@ pub mod built_info {
 pub fn info_strings() -> (String, String, String) {
 	(
 		format!(
-			"This is Grin-Miner version {}{}, built for {} by {}.",
+			"This is Epic-Miner version {}{}, built for {} by {}.",
 			built_info::PKG_VERSION,
 			built_info::GIT_VERSION.map_or_else(|| "".to_owned(), |v| format!(" (git {})", v)),
 			built_info::TARGET,
@@ -105,7 +105,7 @@ mod with_tui {
     ) {
 	    // Run the UI controller.. here for now for simplicity to access
 	    // everything it might need
-	    println!("Starting Grin Miner in UI mode...");
+	    println!("Starting Epic Miner in UI mode...");
 	    println!("Waiting for solvers to shutdown...");
 	    let _ = thread::Builder::new()
 		    .name("ui".to_string())
@@ -168,7 +168,7 @@ where
 		);
 
         #[cfg(not(feature="tui"))]
-		warn!(LOGGER, "Grin-miner was built with TUI support disabled!");
+		warn!(LOGGER, "Epic-miner was built with TUI support disabled!");
 	} else {
 		tui_stopped.store(true, Ordering::Relaxed);
 	}
@@ -215,7 +215,7 @@ fn main() {
 		panic!("Error parsing config file: {}", e);
 	});
 	println!(
-		"Starting Grin-Miner from config file at: {}",
+		"Starting Epic-Miner from config file at: {}",
 		global_config.config_file_path.unwrap().to_str().unwrap()
 	);
 	// Init logging

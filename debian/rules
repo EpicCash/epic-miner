@@ -35,10 +35,10 @@ binary binary-arch binary-indep: build/stamp debian/control
 	dh_testroot
 	dh_prep
 	cargo install --path . --root $(ROOTDIR)/usr/
-	strip $(ROOTDIR)/usr/bin/grin-miner
+	strip $(ROOTDIR)/usr/bin/epic-miner
 	mkdir -p $(ROOTDIR)/usr/lib/
 	mkdir -p $(ROOTDIR)/etc/
-	cp grin-miner.toml $(ROOTDIR)/etc/grin-miner.toml
+	cp epic-miner.toml $(ROOTDIR)/etc/epic-miner.toml
 	find target/release -iname libppow.so -exec cp "{}" $(ROOTDIR)/usr/lib/libppow.so \;
 	strip $(ROOTDIR)/usr/lib/libppow.so
 	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckaroo.so \;

@@ -3,16 +3,16 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use core::config::{MinerConfig, GrinMinerPluginConfig};
+use core::config::{MinerConfig, EpicMinerPluginConfig};
 use core::errors::MinerError;
 use util::LOGGER;
 
 use {PluginConfig};
 
-/// Transforms a set of grin-miner plugin configs to cuckoo-miner plugins configs
+/// Transforms a set of epic-miner plugin configs to cuckoo-miner plugins configs
 pub fn read_configs(
 	plugin_dir: Option<PathBuf>,
-	conf_in: Vec<GrinMinerPluginConfig>,
+	conf_in: Vec<EpicMinerPluginConfig>,
 ) -> Result<Vec<PluginConfig>, MinerError> {
 	// Resolve a final plugin path, either config-provided or from the current executable path
 	let plugin_dir_absolute_path = match plugin_dir {

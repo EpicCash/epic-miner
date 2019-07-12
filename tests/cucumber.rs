@@ -1,13 +1,13 @@
 #[macro_use]
 extern crate cucumber_rust;
 extern crate cuckoo_miner as cuckoo;
-extern crate grin_miner_core as core;
+extern crate epic_miner_core as core;
 extern crate progpow_miner as progpow;
 extern crate rand;
 extern crate randomx_miner as randomx;
 mod common;
 
-use core::config::{GrinMinerPluginConfig, MinerConfig};
+use core::config::{EpicMinerPluginConfig, MinerConfig};
 use core::types::Algorithm;
 use core::Miner;
 
@@ -66,7 +66,7 @@ mod miner_test {
 				"cuckoo" => {
 					//let plugin = PluginConfig::new(mining_plugin_dir_for_tests(), &world.plugin).unwrap();
 					miner_config.miner_plugin_dir = Some(mining_plugin_dir_for_tests());
-					miner_config.miner_plugin_config = vec![GrinMinerPluginConfig{ plugin_name: world.plugin.clone(), ..Default::default()}];
+					miner_config.miner_plugin_config = vec![EpicMinerPluginConfig{ plugin_name: world.plugin.clone(), ..Default::default()}];
 					world.miner = Some(TargetMiner::Cuckoo(cuckoo::CuckooMiner::new(&miner_config)));
 				},
 				_ => {

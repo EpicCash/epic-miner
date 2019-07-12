@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Difficulty calculation as from Grin
+/// Difficulty calculation as from Epic
 
 use blake2::blake2b::Blake2b;
 use std::cmp::{max, min};
 use std::fmt;
 use byteorder::{BigEndian, ByteOrder};
 
-// constants from grin
+// constants from epic
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
 const SECOND_POW_EDGE_BITS: u8 = 29;
 const PROOF_SIZE: usize = 42;
@@ -141,7 +141,7 @@ impl Proof {
 		min(diff, <u64>::max_value() as u128) as u64
 	}
 
-	/// Hash, as in Grin
+	/// Hash, as in Epic
 	fn hash(&self) -> Hash {
 		let nonce_bits = self.edge_bits as usize;
 		let mut bitvec = BitVec::new(nonce_bits * PROOF_SIZE);

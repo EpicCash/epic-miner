@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2017 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Crate wrapping up the Grin miner plugins
+//! Crate wrapping up the Epic miner plugins
 
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
@@ -290,8 +290,8 @@ impl Solution {
 	}
 
 	/// Returns the hash of the solution, as performed in
-	/// grin
-	/// TODO: Check whether grin sticks to u32s like this
+	/// epic
+	/// TODO: Check whether epic sticks to u32s like this
 	pub fn hash(&self) -> [u8; 32] {
 		// Hash
 		let mut blake2b = Blake2b::new(32);

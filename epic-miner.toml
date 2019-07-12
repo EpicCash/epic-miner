@@ -1,6 +1,6 @@
-# Sample Server Configuration File for Grin-Miner
+# Sample Server Configuration File for Epic-Miner
 #
-# Grin-Miner will look for this file in these places: in the following
+# Epic-Miner will look for this file in these places: in the following
 # order:
 #
 # -The working directory
@@ -25,7 +25,7 @@ log_to_file = true
 file_log_level = "Debug"
 
 # Log file path
-log_file_path = "grin-miner.log"
+log_file_path = "epic-miner.log"
 
 # Whether to append to the log file (true), or replace it on every run (false)
 log_file_append = true
@@ -45,7 +45,7 @@ cpu_threads = 3
 # whether to run the tui
 run_tui = true
 
-# listening grin stratum server url
+# listening epic stratum server url
 stratum_server_addr = "127.0.0.1:3416"
 
 # login for the stratum server (if required)
@@ -58,7 +58,7 @@ stratum_server_addr = "127.0.0.1:3416"
 stratum_server_tls_enabled = false
 
 #The directory in which mining plugins are installed
-#if not specified, grin miner will look in the directory /deps relative
+#if not specified, epic miner will look in the directory /deps relative
 #to the executable
 
 #miner_plugin_dir = "target/debug/plugins"

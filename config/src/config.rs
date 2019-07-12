@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ extern crate dirs;
 /// The default file name to use when trying to derive
 /// the config file location
 
-const CONFIG_FILE_NAME: &'static str = "grin-miner.toml";
-const GRIN_HOME: &'static str = ".grin";
+const CONFIG_FILE_NAME: &'static str = "epic-miner.toml";
+const GRIN_HOME: &'static str = ".epic";
 
 
 
@@ -76,7 +76,7 @@ impl GlobalConfig {
 			self.config_file_path = Some(config_path);
 			return Ok(());
 		}
-		// Then look in {user_home}/.grin
+		// Then look in {user_home}/.epic
 		let config_path = dirs::home_dir();
 		if let Some(mut p) = config_path {
 			p.push(GRIN_HOME);
@@ -86,8 +86,8 @@ impl GlobalConfig {
 				return Ok(());
 			}
 		}
-        // Then look in /etc/grin-miner.toml
-        let config_path = PathBuf::from(r"/etc/grin-miner.toml");
+        // Then look in /etc/epic-miner.toml
+        let config_path = PathBuf::from(r"/etc/epic-miner.toml");
         if config_path.exists() {
             self.config_file_path = Some(config_path);
             return Ok(());

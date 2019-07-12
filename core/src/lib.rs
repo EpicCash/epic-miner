@@ -5,7 +5,7 @@ extern crate serde_derive;
 extern crate rand;
 extern crate byteorder;
 
-//extern crate grin_miner_util as util;
+//extern crate epic_miner_util as util;
 
 pub mod errors;
 pub mod types;

@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2018 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ impl Default for LoggingConfig {
 			stdout_log_level: LogLevel::Debug,
 			log_to_file: false,
 			file_log_level: LogLevel::Trace,
-			log_file_path: String::from("grin.log"),
+			log_file_path: String::from("epic.log"),
 			log_file_append: false,
 			tui_running: None,
 		}

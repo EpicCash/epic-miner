@@ -1,12 +1,12 @@
 [package]
-name = "grin_miner"
+name = "epic_miner"
 version = "1.0.2"
-authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
-description = "Mining software for Grin, supports CPU and CUDA GPUs."
+authors = ["Epic Developers <mimblewimble@lists.launchpad.net>"]
+description = "Mining software for Epic, supports CPU and CUDA GPUs."
 build = "src/build/build.rs"
 license = "Apache-2.0"
-repository = "https://github.com/mimblewimble/grin-miner"
-keywords = [ "crypto", "grin", "mimblewimble", "mining"]
+repository = "https://github.com/mimblewimble/epic-miner"
+keywords = [ "crypto", "epic", "mimblewimble", "mining"]
 autobins = false
 
 [workspace]
@@ -18,8 +18,8 @@ opencl = ["ocl_cuckatoo", "ocl_cuckaroo"]
 tui = ["cursive"]
 
 [[bin]]
-name = "grin-miner"
-path = "src/bin/grin_miner.rs"
+name = "epic-miner"
+path = "src/bin/epic_miner.rs"
 
 [dependencies]
 backtrace = "0.3"
@@ -33,10 +33,10 @@ term = "0.4"
 time = "0.1"
 rand = "^0.3.16"
 
-grin_miner_core = { path = "./core", version = "0.1.0" }
-grin_miner_util = { path = "./util", version = "1.0.2" }
-grin_miner_plugin = { path = "./plugin", version = "1.0.2" }
-grin_miner_config = { path = "./config", version = "1.0.2" }
+epic_miner_core = { path = "./core", version = "0.1.0" }
+epic_miner_util = { path = "./util", version = "1.0.2" }
+epic_miner_plugin = { path = "./plugin", version = "1.0.2" }
+epic_miner_config = { path = "./config", version = "1.0.2" }
 #cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2" }
 #use this alternative inclusion below to build cuda plugins
 cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-cuda-plugins"]}

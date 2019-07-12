@@ -1,6 +1,6 @@
 extern crate blake2_rfc;
 extern crate byteorder;
-extern crate grin_miner_plugin as plugin;
+extern crate epic_miner_plugin as plugin;
 extern crate hashbrown;
 extern crate libc;
 extern crate ocl;

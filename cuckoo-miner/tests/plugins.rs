@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2017 The Epic Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 mod common;
 
 extern crate cuckoo_miner as cuckoo;
-extern crate grin_miner_plugin as plugin;
+extern crate epic_miner_plugin as plugin;
 extern crate rand;
 
 use common::{T4_GENESIS_PREPOW, T4_GENESIS_PROOF};
@@ -136,7 +136,7 @@ fn test_mutating(pl: &PluginLibrary, mut params: SolverParams) {
 	pl.unload();
 }
 
-// check that output is consistent with grin T4 Genesis
+// check that output is consistent with epic T4 Genesis
 fn test_t4_genesis(pl: &PluginLibrary, mut params: SolverParams) {
 	let mut sols = SolverSolutions::default();
 	let mut stats = SolverStats::default();
