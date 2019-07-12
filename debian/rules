@@ -34,6 +34,7 @@ build/rustup:
 binary binary-arch binary-indep: build/stamp debian/control
 	dh_testroot
 	dh_prep
+	mkdir -p $(ROOT)/var/log/epic/
 	cargo install --path . --root $(ROOTDIR)/usr/
 	strip $(ROOTDIR)/usr/bin/epic-miner
 	mkdir -p $(ROOTDIR)/usr/lib/
