@@ -15,13 +15,13 @@ clean: debian/control build/rustup
 build/epic-miner: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner
 	cd build/epic-miner
-	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=OFF -DETHASHCL=ON
+	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=OFF -DETHASHCL=ON -DCMAKE_BUILD_TYPE=Release
 	make
 
 build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner-cuda
 	cd build/epic-miner-cuda
-	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_C_FLAGS="-I/opt/cuda/include,-I/usr/local/cuda/include" -DCMAKE_CXX_FLAGS="-I/opt/cuda/include,-I/usr/local/cuda/include"
+	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-I /opt/cuda/include -I /usr/local/cuda/include" -DCMAKE_CXX_FLAGS="-I /opt/cuda/include -I /usr/local/cuda/include"
 	make
 
 .PHONY: build build-arch build-indep
