@@ -21,7 +21,7 @@ build/epic-miner: build/rustup Cargo.toml config core cuckoo-miner debian etc fe
 build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner-cuda
 	cd build/epic-miner-cuda
-	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_BUILD_TYPE=Release -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_BUILD_TYPE=Release
 	make
 
 .PHONY: build build-arch build-indep
