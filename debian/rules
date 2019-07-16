@@ -2,6 +2,7 @@
 
 PATH := $(HOME)/.cargo/bin:$(PATH)
 ROOTDIR := debian/epic-miner
+CUDAROOTDIR := debian/epic-miner-cuda
 
 .PHONY: clean
 clean: debian/control build/rustup
@@ -62,19 +63,19 @@ epic-miner:
 epic-miner-cuda:
 	dh_testroot
 	dh_prep
-	mkdir -p $(ROOTDIR)/var/log/epic/
-	mkdir -p $(ROOTDIR)/usr/bin/
-	mkdir -p $(ROOTDIR)/opt/epic-miner/lib/
-	cp debian/epic-miner-cuda.sh $(ROOTDIR)/usr/bin/epic-miner-cuda
-	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner-cuda/
+	mkdir -p $(CUDAROOTDIR)/var/log/epic/
+	mkdir -p $(CUDAROOTDIR)/usr/bin/
+	mkdir -p $(CUDAROOTDIR)/opt/epic-miner/lib/
+	cp debian/epic-miner-cuda.sh $(CUDAROOTDIR)/usr/bin/epic-miner-cuda
+	cp epic-miner.toml $(CUDAROOTDIR)/opt/epic-miner-cuda/
 	cargo build --release --features cuda
-	cargo install --features cuda --path . --root $(ROOTDIR)/opt/epic-miner-cuda/
-	strip $(ROOTDIR)/opt/epic-miner-cuda/epic-miner
-	mkdir -p $(ROOTDIR)/usr/lib/
-	find target/release -iname libppow.so -exec cp "{}" $(ROOTDIR)/opt/epic-miner-cuda/lib/libppow.so \;
-	strip $(ROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
-	mkdir -p $(ROOTDIR)/opt/epic-miner/plugins/
-	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/plugins/
+	cargo install --features cuda --path . --root $(CUDAROOTDIR)/opt/epic-miner-cuda/
+	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/epic-miner
+	mkdir -p $(CUDAROOTDIR)/usr/lib/
+	find target/release -iname libppow.so -exec cp "{}" $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so \;
+	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
+	mkdir -p $(CUDAROOTDIR)/opt/epic-miner/plugins/
+	cp target/release/plugins/*.cuckooplugin $(CUDAROOTDIR)/opt/epic-miner/plugins/
 	dh_installdocs -p$@
 	dh_installchangelogs -p$@
 	dh_compress -p$@
@@ -86,4 +87,4 @@ epic-miner-cuda:
 
 
 .PHONY: binary binary-arch binary-indep
-binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build
+binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build epic-miner epic-miner-cuda
