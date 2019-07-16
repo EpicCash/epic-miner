@@ -14,7 +14,10 @@
 
 //! Stratum client implementation, for standalone mining against a running
 //! epic node
+#[cfg(feature = "opencl")]
 extern crate cuckoo_miner as cuckoo;
+#[cfg(feature = "cuda")]
+extern crate cuckoo_miner_cuda as cuckoo;
 extern crate randomx_miner as randomx;
 #[cfg(feature = "opencl")]
 extern crate progpow_miner_opencl as progpow;
