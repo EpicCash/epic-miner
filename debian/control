@@ -2,7 +2,7 @@ Source: epic-miner
 Section: utils
 Priority: optional
 Maintainer: Yuri Albuquerque <yurialbuquerque@brickabode.com>
-Build-Depends: cmake, libclang-dev, libncurses5-dev, clang, libncursesw5-dev, opencl-headers, libssl-dev, pkg-config, ocl-icd-opencl-dev
+Build-Depends: cmake, libclang-dev, libncurses5-dev, clang, libncursesw5-dev, opencl-headers, libssl-dev, pkg-config, ocl-icd-opencl-dev, cuda
 Standards-Version: 4.0.0
 Homepage: http://brickabode.com/
 
@@ -10,3 +10,7 @@ Package: epic-miner
 Architecture: amd64
 Depends: build-essential, ${misc:Depends}, libncurses5-dev, libclang-dev, libncursesw5-dev, librandomx, ocl-icd-opencl-dev, openssl, libssl-dev
 Description: Epic miner
+
+Package: epic-miner-cuda
+Architecture: amd64
+Depends: build-essential, ${misc:Depends}, libncurses5-dev, libclang-dev, libncursesw5-dev, librandomx, cuda, openssl, libssl-dev

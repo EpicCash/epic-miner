@@ -1,0 +1,4 @@
+#!/bin/sh
+
+rm -f /etc/epic-miner.toml
+ln -s /opt/epic-miner/epic-miner.toml /etc/epic-miner.toml

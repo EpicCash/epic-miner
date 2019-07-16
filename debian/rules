@@ -7,53 +7,83 @@ ROOTDIR := debian/epic-miner
 clean: debian/control build/rustup
 	dh_clean
 	cargo clean
-	rm build/stamp -rf
+	rm build/epic-miner -rf
+	rm build/epic-miner-cuda -rf
 	mkdir -p build
 
 .ONESHELL:
-build/stamp: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
-	cargo build --release
-	cd ocl_cuckaroo
-	cargo build --release
-	cd ..
-	cd ocl_cuckatoo
-	cargo build --release
-	cd ..
+build/epic-miner: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+	mkdir -p build
+	touch $(@)
+
+build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build
 	touch $(@)
 
 .PHONY: build build-arch build-indep
-build build-arch build-indep: build/stamp
+build build-arch build-indep: build/epic-miner build/epic-miner-cuda
 
 .ONESHELL:
 build/rustup:
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	rustup default 1.35.0
 
-.PHONY: binary binary-arch binary-indep
-binary binary-arch binary-indep: build/stamp debian/control
+.PHONY: epic-miner epic-miner-cuda
+epic-miner:
 	dh_testroot
 	dh_prep
-	mkdir -p $(ROOT)/var/log/epic/
-	cargo install --path . --root $(ROOTDIR)/usr/
-	strip $(ROOTDIR)/usr/bin/epic-miner
+	mkdir -p $(ROOTDIR)/var/log/epic/
+	mkdir -p $(ROOTDIR)/usr/bin/
+	mkdir -p $(ROOTDIR)/opt/epic-miner/
+	cp debian/epic-miner.sh $(ROOTDIR)/usr/bin/epic-miner
+	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
+	cargo build --release --features opencl
+	cargo install --features opencl --path . --root $(ROOTDIR)/opt/epic-miner/
+	strip $(ROOTDIR)/opt/epic-miner/epic-miner
+	strip $(ROOTDIR)/opt/epic-miner/ocl_cuckaroo
 	mkdir -p $(ROOTDIR)/usr/lib/
-	mkdir -p $(ROOTDIR)/etc/
-	cp epic-miner.toml $(ROOTDIR)/etc/epic-miner.toml
 	find target/release -iname libppow.so -exec cp "{}" $(ROOTDIR)/usr/lib/libppow.so \;
 	strip $(ROOTDIR)/usr/lib/libppow.so
 	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckaroo.so \;
 	strip $(ROOTDIR)/usr/lib/libocl_cuckaroo.so
 	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckatoo.so \;
 	strip $(ROOTDIR)/usr/lib/libocl_cuckatoo.so
-	mkdir -p $(ROOTDIR)/usr/bin/plugins/
-	find target/release/plugins -iname '*.cuckooplugin' -exec cp "{}" $(ROOTDIR)/usr/bin/plugins/
-	rm $(ROOTDIR)/usr/.crates.toml
-	dh_installdocs
-	dh_installchangelogs
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
+	mkdir -p $(ROOTDIR)/opt/epic-miner/plugins/
+	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/plugins/
+	dh_installdocs -p$@
+	dh_installchangelogs -p$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
+epic-miner-cuda:
+	dh_testroot
+	dh_prep
+	mkdir -p $(ROOTDIR)/var/log/epic/
+	mkdir -p $(ROOTDIR)/usr/bin/
+	mkdir -p $(ROOTDIR)/opt/epic-miner/lib/
+	cp debian/epic-miner-cuda.sh $(ROOTDIR)/usr/bin/epic-miner-cuda
+	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner-cuda/
+	cargo build --release --features cuda
+	cargo install --features cuda --path . --root $(ROOTDIR)/opt/epic-miner-cuda/
+	strip $(ROOTDIR)/opt/epic-miner-cuda/epic-miner
+	mkdir -p $(ROOTDIR)/usr/lib/
+	find target/release -iname libppow.so -exec cp "{}" $(ROOTDIR)/opt/epic-miner-cuda/lib/libppow.so \;
+	strip $(ROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
+	mkdir -p $(ROOTDIR)/opt/epic-miner/plugins/
+	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/plugins/
+	dh_installdocs -p$@
+	dh_installchangelogs -p$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
+
+.PHONY: binary binary-arch binary-indep
+binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build install
