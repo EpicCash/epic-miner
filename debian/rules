@@ -33,7 +33,7 @@ build/rustup:
 	rustup default 1.35.0
 
 .PHONY: epic-miner epic-miner-cuda
-epic-miner:
+epic-miner: build/epic-miner
 	dh_testroot
 	dh_prep
 	mkdir -p $(ROOTDIR)/var/log/epic/
@@ -63,7 +63,7 @@ epic-miner:
 	dh_md5sums -p$@
 	dh_builddeb -p$@
 
-epic-miner-cuda:
+epic-miner-cuda: build/epic-miner-cuda
 	dh_testroot
 	dh_prep
 	mkdir -p $(CUDAROOTDIR)/var/log/epic/
@@ -90,4 +90,4 @@ epic-miner-cuda:
 
 
 .PHONY: binary binary-arch binary-indep
-binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build epic-miner epic-miner-cuda
+binary binary-arch binary-indep: debian/control build epic-miner epic-miner-cuda
