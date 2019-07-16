@@ -21,7 +21,7 @@ build/epic-miner: build/rustup Cargo.toml config core cuckoo-miner debian etc fe
 build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner-cuda
 	cd build/epic-miner-cuda
-	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_C_FLAGS="-I/opt/cuda/include,/usr/local/cuda/include" -DCMAKE_CXX_FLAGS="-I/opt/cuda/include,/usr/local/cuda/include"
+	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_C_FLAGS="-I/opt/cuda/include,-I/usr/local/cuda/include" -DCMAKE_CXX_FLAGS="-I/opt/cuda/include,-I/usr/local/cuda/include"
 	make
 
 .PHONY: build build-arch build-indep
@@ -43,8 +43,8 @@ epic-miner: build/epic-miner
 	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
 	cargo build --release --features opencl
 	cargo install --features opencl --path . --root $(ROOTDIR)/opt/epic-miner/
-	strip $(ROOTDIR)/opt/epic-miner/epic-miner
-	strip $(ROOTDIR)/opt/epic-miner/ocl_cuckaroo
+	strip $(ROOTDIR)/opt/epic-miner/bin/epic-miner
+	strip $(ROOTDIR)/opt/epic-miner/bin/ocl_cuckaroo
 	mkdir -p $(ROOTDIR)/usr/lib/
 	cp build/epic-miner/libexternal/libppow.so $(ROOTDIR)/usr/lib/libppow.so
 	strip $(ROOTDIR)/usr/lib/libppow.so
@@ -73,7 +73,7 @@ epic-miner-cuda: build/epic-miner-cuda
 	cp epic-miner.toml $(CUDAROOTDIR)/opt/epic-miner-cuda/
 	cargo build --release --features cuda
 	cargo install --features cuda --path . --root $(CUDAROOTDIR)/opt/epic-miner-cuda/
-	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/epic-miner
+	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/bin/epic-miner
 	mkdir -p $(CUDAROOTDIR)/usr/lib/
 	cp build/epic-miner-cuda/libexternal/libppow.so $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
 	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so

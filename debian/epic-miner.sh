@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd /opt/epic-miner
-exec ./epic-miner
+exec ./bin/epic-miner
