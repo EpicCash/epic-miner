@@ -5,7 +5,10 @@ extern crate keccak_hash;
 
 extern crate epic_miner_core as core;
 extern crate epic_miner_util as util;
-extern crate progpow;
+#[cfg(feature = "opencl")]
+extern crate progpow_opencl as progpow;
+#[cfg(feature = "cuda")]
+extern crate progpow_cuda as progpow;
 
 pub mod miner;
 pub use miner::PpMiner;

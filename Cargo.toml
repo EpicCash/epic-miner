@@ -14,7 +14,8 @@ members = ["config", "util", "plugin"]
 
 [features]
 default = ["tui"]
-opencl = ["ocl_cuckatoo", "ocl_cuckaroo"]
+opencl = ["ocl_cuckatoo", "ocl_cuckaroo", "progpow_miner_opencl", "progpow_opencl"]
+cuda = ["progpow_miner_cuda", "progpow_cuda"]
 tui = ["cursive"]
 
 [[bin]]
@@ -44,7 +45,6 @@ ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
 ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.2", optional = true}
 randomx = { path = "./randomx-rust", version = "0.1.0" }
 randomx_miner = { path = "./randomx-miner", version = "0.1.0" }
-progpow_miner = { path = "./progpow-miner", version = "0.1.0" } 
 
 [[test]]
 name = "cucumber"
@@ -54,10 +54,31 @@ harness = false
 version = "0.12.0"
 optional = true
 
-[dependencies.progpow]
+[dependencies.progpow_miner_opencl]
+package = "progpow_miner"
+path = "./progpow-miner"
 version = "0.1.0"
+features = ["opencl"]
+optional = true
+
+[dependencies.progpow_miner_cuda]
+package = "progpow_miner"
+path = "./progpow-miner"
+version = "0.1.0"
+features = ["cuda"]
+optional = true
+
+[dependencies.progpow_opencl]
+package = "progpow"
 path = "./progpow-rust"
-features = ["gpu", "progpow_gpu"]
+features = ["opencl"]
+optional = true
+
+[dependencies.progpow_cuda]
+package = "progpow"
+path = "./progpow-rust"
+features = ["cuda"]
+optional = true
 
 [build-dependencies]
 built = "0.2"

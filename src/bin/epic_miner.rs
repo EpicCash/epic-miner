@@ -16,7 +16,10 @@
 //! epic node
 extern crate cuckoo_miner as cuckoo;
 extern crate randomx_miner as randomx;
-extern crate progpow_miner as progpow;
+#[cfg(feature = "opencl")]
+extern crate progpow_miner_opencl as progpow;
+#[cfg(feature = "cuda")]
+extern crate progpow_miner_cuda as progpow;
 
 extern crate epic_miner_config as config;
 extern crate epic_miner_plugin as plugin;

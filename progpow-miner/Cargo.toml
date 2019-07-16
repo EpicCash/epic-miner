@@ -10,4 +10,19 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 
 epic_miner_core = { path = "../core", version = "0.1.0" }
 epic_miner_util = { path = "../util", version = "1.0.2" }
-progpow = { path = "../progpow-rust", version = "0.1.0" }
+
+[dependencies.progpow_opencl]
+package = "progpow"
+path = "../progpow-rust"
+features = ["opencl"]
+optional = true
+
+[dependencies.progpow_cuda]
+package = "progpow"
+path = "../progpow-rust"
+features = ["cuda"]
+optional = true
+
+[features]
+opencl = ["progpow_opencl"]
+cuda = ["progpow_cuda"]
