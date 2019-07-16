@@ -43,6 +43,7 @@ epic-miner: build/epic-miner
 	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
 	cargo build --release --features opencl
 	cargo install --features opencl --path . --root $(ROOTDIR)/opt/epic-miner/
+	cargo install --features opencl --path ocl_cuckaroo --root $(ROOTDIR)/opt/epic-miner/
 	strip $(ROOTDIR)/opt/epic-miner/bin/epic-miner
 	strip $(ROOTDIR)/opt/epic-miner/bin/ocl_cuckaroo
 	mkdir -p $(ROOTDIR)/usr/lib/
