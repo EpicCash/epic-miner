@@ -86,4 +86,4 @@ epic-miner-cuda:
 
 
 .PHONY: binary binary-arch binary-indep
-binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build install
+binary binary-arch binary-indep: build/epic-miner build/epic-miner-cuda debian/control build
