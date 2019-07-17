@@ -98,7 +98,7 @@ driver = 2
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cpu_compat_29"
+plugin_name = "cuckatoo_lean_cpu_compat_31"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
 
