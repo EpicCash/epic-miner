@@ -1,5 +1,7 @@
 #!/bin/sh
 
+mkdir -p /var/log/epic
+touch /var/log/epic/epic-miner.log
 chmod ugo+rwx /var/log/epic
 chmod ugo+rw /var/log/epic/epic-miner.log
 rm -f /etc/epic-miner.toml
