@@ -53,8 +53,8 @@ epic-miner: build/epic-miner
 	strip $(ROOTDIR)/usr/lib/libocl_cuckaroo.so
 	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckatoo.so \;
 	strip $(ROOTDIR)/usr/lib/libocl_cuckatoo.so
-	mkdir -p $(ROOTDIR)/opt/epic-miner/plugins/
-	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/plugins/
+	mkdir -p $(ROOTDIR)/opt/epic-miner/bin/plugins/
+	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/bin/plugins/
 	dh_installdocs -p$@
 	dh_installchangelogs -p$@
 	dh_compress -p$@
@@ -78,8 +78,8 @@ epic-miner-cuda: build/epic-miner-cuda
 	mkdir -p $(CUDAROOTDIR)/usr/lib/
 	cp build/epic-miner-cuda/libexternal/libppow.so $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
 	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
-	mkdir -p $(CUDAROOTDIR)/opt/epic-miner-cuda/plugins/
-	cp target/release/plugins/*.cuckooplugin $(CUDAROOTDIR)/opt/epic-miner-cuda/plugins/
+	mkdir -p $(CUDAROOTDIR)/opt/epic-miner-cuda/bin/plugins/
+	cp target/release/plugins/*.cuckooplugin $(CUDAROOTDIR)/opt/epic-miner-cuda/bin/plugins/
 	dh_installdocs -p$@
 	dh_installchangelogs -p$@
 	dh_compress -p$@
