@@ -4,5 +4,5 @@ mkdir -p /var/log/epic
 touch /var/log/epic/epic-miner.log
 chmod ugo+rwx /var/log/epic
 chmod ugo+rw /var/log/epic/epic-miner.log
-rm -f /etc/epic-miner.toml
-ln -s /opt/epic-miner/epic-miner.toml /etc/epic-miner.toml
+rm -f /etc/epic-miner-cuda.toml
+ln -s /opt/epic-miner-cuda/epic-miner.toml /etc/epic-miner-cuda.toml
