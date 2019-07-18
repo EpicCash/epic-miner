@@ -1,24 +1,23 @@
 #!/usr/bin/make -f
 
-PATH := $(HOME)/.cargo/bin:$(PATH)
 ROOTDIR := debian/epic-miner
 CUDAROOTDIR := debian/epic-miner-cuda
 
 .PHONY: clean
-clean: debian/control build/rustup
+clean: debian/control
 	dh_clean
 	cargo clean
 	rm build -rf
 	mkdir -p build
 
 .ONESHELL:
-build/epic-miner: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+build/epic-miner: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner
 	cd build/epic-miner
 	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=OFF -DETHASHCL=ON -DCMAKE_BUILD_TYPE=Release
 	make
 
-build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+build/epic-miner-cuda: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner-cuda
 	cd build/epic-miner-cuda
 	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_BUILD_TYPE=Release
@@ -26,11 +25,6 @@ build/epic-miner-cuda: build/rustup Cargo.toml config core cuckoo-miner debian e
 
 .PHONY: build build-arch build-indep
 build build-arch build-indep: build/epic-miner build/epic-miner-cuda
-
-.ONESHELL:
-build/rustup:
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-	rustup default 1.35.0
 
 .PHONY: epic-miner epic-miner-cuda
 epic-miner: build/epic-miner
