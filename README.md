@@ -1,8 +1,6 @@
-[![Build Status](https://travis-ci.org/mimblewimble/grin-miner.svg?branch=master)](https://travis-ci.org/mimblewimble/grin-miner)
+# Epic Miner
 
-# Grin Miner
-
-A standalone mining implementation intended for mining Grin against a running Grin node.
+A standalone mining implementation intended for mining epic against a running Epic node.
 
 ## Supported Platforms
 
@@ -10,81 +8,106 @@ At present, only mining plugins for linux-x86_64 and MacOS exist. This will like
 
 ## Requirements
 
-- rust 1.30+ (use [rustup]((https://www.rustup.rs/))- i.e. `curl https://sh.rustup.rs -sSf | sh; source $HOME/.cargo/env`)
-- cmake 3.2+ (for [Cuckoo mining plugins]((https://github.com/mimblewimble/cuckoo-miner)))
-- ncurses and libs (ncurses, ncursesw5)
-- zlib libs (zlib1g-dev or zlib-devel)
-- linux-headers (reported needed on Alpine linux)
+- The requirements for building the miner are the same from the epic server. You can check them in the topic [Requirements](https://gitlab.com/epiccash/epic/blob/master/doc/build.md#requirements) in the Epic server build instructions
+- (**For cuda plugins**) Cuda toolkit 9+ (check with `nvcc --version`)
+- (**For opencl plugins**) opencl-dev
 
-And a [running Grin node](https://github.com/mimblewimble/grin/blob/master/doc/build.md) to mine into!
+For Debian-based distributions (Debian, Ubuntu, Mint, etc) you can install the opencl-dev with the following command in the terminal:
+
+```sh
+sudo apt install ocl-icd-opencl-dev
+```
+
 
 ## Build steps
 
 ```sh
-git clone https://github.com/mimblewimble/grin-miner.git
-cd grin-miner
-git submodule update --init
-cargo build
+git clone https://gitlab.com/epiccash/epic-miner
+cd epic-miner
+git submodule update --init --recursive
 ```
 
-### Building the Cuckoo-Miner plugins
+To build the project you will have to specify if you are going to mine using `OPENCL` or `CUDA`. To mine using **CPUs/GPUs** use `OPENCL`. Execute the following line in the terminal to build with `OPENCL`:
 
-Grin-miner automatically builds x86_64 CPU plugins. Cuda plugins are also provided, but are
-not enabled by default. To enable them, modify `Cargo.toml` as follows:
-
-```
-change:
-cuckoo_miner = { path = "./cuckoo-miner" }
-to:
-cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
-```
-
-The Cuda toolkit 9+ must be installed on your system (check with `nvcc --version`)
-
-### Building the OpenCL plugins
-OpenCL plugins are not enabled by default. Run `install_ocl_plugins.sh` script to build and install them.
-
-```
-./install_ocl_plugins.sh
-```
-You must install OpenCL libraries for your operating system before.
-If you just need to compile them (for development or testing purposes) build grin-miner the following way:
-
-```
+```sh
 cargo build --features opencl
 ```
 
-### Build errors
+If you have NVIDIA GPUs and your system has **the latest nvidia drivers and the Cuda toolkit 9+ installed**, you can build the cuda plugins using the following command:
 
-See [Troubleshooting](https://github.com/mimblewimble/docs/wiki/Troubleshooting)
+```sh
+cargo build --features cuda
+```
 
-## What was built?
+## What was built
 
 A successful build gets you:
 
- - `target/debug/grin-miner` - the main grin-miner binary
- - `target/debug/plugins/*` - mining plugins
+- `target/debug/epic-miner` - the main epic-miner binary
+- `target/debug/plugins/*` - mining plugins
 
-Make sure you always run grin-miner within a directory that contains a
-`grin-miner.toml` configuration file.
+## Running the Epic Miner
 
-While testing, put the grin-miner binary on your path like this:
+### Prerequisites
 
+**To run the epic-miner (with the stratum server enabled) you also need an epic server running and an epic wallet listening.**
+
+- Instruction of how to run the **epic server** and the **epic wallet** (in listening mode) using the .deb packages can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/running.org).
+- If you want to build the **epic server** from source code, instructions can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/build.md).
+- If you want to build and execute **epic wallet** (in listening mode) from source code, instructions can be found [here](https://gitlab.com/epiccash/epicwallet/tree/master/doc/build.md).
+
+- To enable the stratum server in the epic server, we need to edit the server configuration file called `epic-server.toml`. If you are using the [epic server default configutation](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#run_config_default), this file is under your home directory in the folder `~/.epic/main`. Open this file with your text editor and find the following line:
+
+    ``` toml
+      enable_stratum_server = false
+    ```
+
+    Then, change it to:
+
+    ``` toml
+      enable_stratum_server = true
+    ```
+
+    More information about this can be found on the topic [Configuring the Epic Server to work with the miner](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#config_miner_server) in the testnet documentation.
+
+### Executing the epic miner
+
+**Make sure you always run epic-miner within a directory that contains a
+`epic-miner.toml` configuration file.**
+
+After you have your epic server running (with the stratum server enabled) and a wallet listening to it, to execute the epic miner follow the instructions:
+
+1. Open a new terminal window in the root directory of your Epic miner installation.
+
+2. In the terminal, navigate to where your epic-miner binary was generated using the followed command:
+
+    ```sh
+    cd target/debug
+    ```
+
+3. Then, you can execute the epic miner typing the following command in the terminal:
+
+    ```sh
+    ./epic-miner
+    ```
+
+(Optional) While testing, put the epic-miner binary on your path like this:
+
+```sh
+export PATH=/path/to/epic-miner/dir/target/debug:$PATH
 ```
-export PATH=/path/to/grin-miner/dir/target/debug:$PATH
-```
 
-You can then run `grin-miner` directly.
+You can then run the `epic-miner` directly in the terminal using the following command:
+
+ ```
+epic-miner
+```
 
 # Configuration
 
-Grin-miner can be further configured via the `grin-miner.toml` file.
-This file contains contains inline documentation on all configuration
-options, and should be the first point of reference.
+**You should always ensure that this file exists in the directory from which you're
+running epic-miner.**
 
-You should always ensure that this file exists in the directory from which you're
-running grin-miner.
-
-# Using grin-miner
-
-There is a [Grin forum post](https://www.grin-forum.org/t/how-to-mine-cuckoo-30-in-grin-help-us-test-and-collect-stats/152) with further detail on how to configure grin-miner and mine grin's testnet.
+Epic-miner can be further configured via the `epic-miner.toml` file.
+This file contains inline documentation on all configuration
+options, and should be the first point of reference. Also, you can see Topic [Configuring your epic-miner](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#config_miner) in the testnet documentation for further information.
