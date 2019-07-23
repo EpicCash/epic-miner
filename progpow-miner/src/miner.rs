@@ -101,7 +101,7 @@ impl PpMiner {
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 
-			let boundary = U256::max_value() / U256::from(target_difficulty);
+			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
 
 			let target = (boundary >> 192).low_u64();
 			let mut header = [0u8; 32];
