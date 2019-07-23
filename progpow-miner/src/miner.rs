@@ -136,7 +136,7 @@ impl PpMiner {
 				}
 
 				let delta = end - start;
-				let hps = if delta > 0 { (WORK_PER_CALL * 1000) / (end-start) } else { 1 };
+				let hps = if delta > 0 { (WORK_PER_CALL * 1000) / (end-start) } else { WORK_PER_CALL };
 
 				let mut stats = Stats {
 					last_start_time: start,
