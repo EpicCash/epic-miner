@@ -17,6 +17,7 @@ use bigint::uint::U256;
 use util::LOGGER;
 
 use progpow::hardware::PpGPU;
+use progpow::hardware::PpCPU;
 use progpow::types::PpCompute;
 
 const ALGORITHM_NAME: &str = "progpow";
@@ -69,6 +70,7 @@ impl PpMiner {
 		let mut iter_count = 0;
 		let mut paused = true;
 
+		let mut cpu = PpCPU::new();
 		let mut gpu = PpGPU::new(config.device, config.driver);
 		gpu.init();
 
@@ -99,8 +101,9 @@ impl PpMiner {
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 
-			let boundary = U256::max_value() / U256::from(if target_difficulty > 0 { target_difficulty } else { 1 });
-			let target = boundary.low_u64();
+			let boundary = U256::max_value() / U256::from(target_difficulty);
+
+			let target = (boundary >> 192).low_u64();
 			let mut header = [0u8; 32];
 
 			keccak_256(&header_pre, &mut header);
@@ -118,19 +121,29 @@ impl PpMiner {
 				if let Some(solution) = solutions {
 					last_solution_time = timestamp();
 					let (nonce, mix) = solution;
-					s.solutions.push(Solution::new(
-						job_id as u64,
-						nonce,
-						AlgorithmParams::ProgPow(mix),
-					));
+
+					let (v, _) = cpu.verify(&header, height, nonce).unwrap();
+					let digest: [u8; 32] = unsafe { ::std::mem::transmute(v) };
+					let h256_digest: U256 = digest.into();
+
+					if h256_digest <= boundary {
+						s.solutions.push(Solution::new(
+							job_id as u64,
+							nonce,
+							AlgorithmParams::ProgPow(mix),
+						));
+					}
 				}
+
+				let delta = end - start;
+				let hps = if delta > 0 { (WORK_PER_CALL * 1000) / (end-start) } else { 0 };
 
 				let mut stats = Stats {
 					last_start_time: start,
 					last_end_time: end,
 					last_solution_time: last_solution_time,
 					iterations: iter_count as u32,
-					hashes_per_sec: (WORK_PER_CALL * 1000) / (end-start),
+					hashes_per_sec: hps,
 					..Default::default()
 				};
  
