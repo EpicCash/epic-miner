@@ -18,7 +18,6 @@ For Debian-based distributions (Debian, Ubuntu, Mint, etc) you can install the o
 sudo apt install ocl-icd-opencl-dev
 ```
 
-
 ## Build steps
 
 ```sh
@@ -50,7 +49,7 @@ A successful build gets you:
 
 ### Prerequisites
 
-**To run the epic-miner (with the stratum server enabled) you also need an epic server running and an epic wallet listening.**
+**To run the epic-miner you also need an epic server (with the stratum server enabled) running and an epic wallet listening.**
 
 - Instruction of how to run the **epic server** and the **epic wallet** (in listening mode) using the .deb packages can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/running.org).
 - If you want to build the **epic server** from source code, instructions can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/build.md).
@@ -72,41 +71,25 @@ A successful build gets you:
 
 ### Executing the epic miner
 
-**Make sure you always run epic-miner within a directory that contains a
+**Make sure you always run epic-miner within a directory that contains an
 `epic-miner.toml` configuration file.**
 
 After you have your epic server running (with the stratum server enabled) and a wallet listening to it, to execute the epic miner follow the instructions:
 
 1. Open a new terminal window in the root directory of your Epic miner installation.
+2. To execute epic miner, you need to specify if you built it with `OPENCL` or `CUDA`. To run the epic miner compiled with `OPENCL` execute the following line in terminal:
 
-2. In the terminal, navigate to where your epic-miner binary was generated using the followed command:
+     ```sh
+     cargo run --features opencl
+     ```
+
+    And to execute your miner built with the cuda plugin, execute the command:  
 
     ```sh
-    cd target/debug
+     cargo run --features cuda
     ```
 
-3. Then, you can execute the epic miner typing the following command in the terminal:
-
-    ```sh
-    ./epic-miner
-    ```
-
-(Optional) While testing, put the epic-miner binary on your path like this:
-
-```sh
-export PATH=/path/to/epic-miner/dir/target/debug:$PATH
-```
-
-You can then run the `epic-miner` directly in the terminal using the following command:
-
- ```
-epic-miner
-```
-
-# Configuration
-
-**You should always ensure that this file exists in the directory from which you're
-running epic-miner.**
+## Configuration
 
 Epic-miner can be further configured via the `epic-miner.toml` file.
 This file contains inline documentation on all configuration
