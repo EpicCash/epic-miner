@@ -9,14 +9,17 @@ At present, only mining plugins for linux-x86_64 and MacOS exist. This will like
 ## Requirements
 
 - The requirements for building the miner are the same from the epic server. You can check them in the topic [Requirements](https://gitlab.com/epiccash/epic/blob/master/doc/build.md#requirements) in the Epic server build instructions
-- (**For cuda plugins**) Cuda toolkit 9+ (check with `nvcc --version`)
-- (**For opencl plugins**) opencl-dev
 
-For Debian-based distributions (Debian, Ubuntu, Mint, etc) you can install the opencl-dev with the following command in the terminal:
+- If you want to mine using CUDA which requires NVIDIA GPU:
+  - You will need the Cuda toolkit 9+ (you can check if you have it installed excecute the command in termintal: `nvcc --version`)
+- If you want to mine using **CPUs/GPUs**
+  - You will need to install opencl-dev
 
-```sh
-sudo apt install ocl-icd-opencl-dev
-```
+  For Debian-based distributions (Debian, Ubuntu, Mint, etc) you can install the opencl-dev with the following command in the terminal:
+
+  ```sh
+  sudo apt install ocl-icd-opencl-dev
+  ```
 
 ## Build steps
 
