@@ -128,7 +128,7 @@ mod with_tui {
     }
 }
 
-fn start_miner<T>(mut miner: T, mining_config: &MinerConfig)
+fn start_miner<T>(mut miner: T, algorithm: Algorithm, mining_config: &MinerConfig)
 where
 	T: Miner + 'static
 {
@@ -140,6 +140,7 @@ where
 		});
 
 	let cc = client::Controller::new(
+		algorithm.clone(),
 		&mining_config.stratum_server_addr,
 		mining_config.stratum_server_login.clone(),
 		mining_config.stratum_server_password.clone(),
@@ -249,8 +250,8 @@ fn main() {
 	debug!(LOGGER, "Starting solvers");
 
 	match mining_config.algorithm.clone().unwrap() {
-		Algorithm::ProgPow => start_miner(progpow::PpMiner::new(&mining_config), &mining_config),
-		Algorithm::RandomX => start_miner(randomx::RxMiner::new(&mining_config), &mining_config),//randomx::RxMiner::new(&mining_config),
-		Algorithm::Cuckoo => start_miner(cuckoo::CuckooMiner::new(&mining_config), &mining_config),
+		Algorithm::ProgPow => start_miner(progpow::PpMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),
+		Algorithm::RandomX => start_miner(randomx::RxMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),//randomx::RxMiner::new(&mining_config),
+		Algorithm::Cuckoo => start_miner(cuckoo::CuckooMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),
 	}
 }

@@ -28,6 +28,7 @@ use time;
 use types;
 use util::LOGGER;
 use core::{Solution, AlgorithmParams};
+use core::Algorithm;
 
 #[derive(Debug)]
 pub enum Error {
@@ -161,6 +162,7 @@ impl BufRead for Stream {
 
 pub struct Controller {
 	_id: u32,
+	algorithm: Algorithm,
 	server_url: String,
 	server_login: Option<String>,
 	server_password: Option<String>,
@@ -182,6 +184,7 @@ fn invlalid_error_response() -> types::RpcError {
 
 impl Controller {
 	pub fn new(
+		algorithm: Algorithm,
 		server_url: &str,
 		server_login: Option<String>,
 		server_password: Option<String>,
@@ -192,6 +195,7 @@ impl Controller {
 		let (tx, rx) = mpsc::channel::<types::ClientMessage>();
 		Ok(Controller {
 			_id: 0,
+			algorithm,
 			server_url: server_url.to_string(),
 			server_login: server_login,
 			server_password: server_password,
@@ -251,12 +255,29 @@ impl Controller {
 		Ok(())
 	}
 
+	fn parse_algorithm(&self) -> String {
+		match self.algorithm {
+			Algorithm::Cuckoo => "cuckoo".to_string(),
+			Algorithm::RandomX => "randomx".to_string(),
+			Algorithm::ProgPow => "progpow".to_string(),
+		}
+	}
+
+	fn get_parse_algorithm(&self, algo: String) -> Algorithm {
+		match algo.as_str() {
+			"cuckoo" => Algorithm::Cuckoo,
+			"randomx" => Algorithm::RandomX,
+			"progpow" => Algorithm::ProgPow,
+			_ => panic!("Algorithm is not supported")
+		}
+	}
+
 	fn send_message_get_job_template(&mut self) -> Result<(), Error> {
 		let req = types::RpcRequest {
 			id: self.last_request_id.to_string(),
 			jsonrpc: "2.0".to_string(),
 			method: "getjobtemplate".to_string(),
-			params: None,
+			params: Some(serde_json::to_value(types::JobParams { algorithm: self.parse_algorithm() })?),
 		};
 		let req_str = serde_json::to_string(&req)?;
 		{
@@ -362,7 +383,11 @@ impl Controller {
 				Some(params) => {
 					let job = serde_json::from_value::<types::JobTemplate>(params)?;
 					info!(LOGGER, "Got a new job: {:?}", job);
-					self.send_miner_job(job)
+					if self.get_parse_algorithm(job.algorithm.clone()) == self.algorithm {
+						return self.send_miner_job(job);
+					}
+
+					Ok(())
 				}
 			},
 			_ => Err(Error::RequestError("Unknonw method".to_owned())),
@@ -405,18 +430,21 @@ impl Controller {
 			"getjobtemplate" => {
 				if let Some(result) = res.result {
 					let job: types::JobTemplate = serde_json::from_value(result)?;
-					{
-						let mut stats = self.stats.write()?;
-						stats.client_stats.last_message_received = format!(
-							"Last Message Received: Got job for block {} at difficulty {}",
-							job.height, job.difficulty
+					if self.algorithm == self.get_parse_algorithm(job.algorithm.clone()) {
+						{
+							let mut stats = self.stats.write()?;
+							stats.client_stats.last_message_received = format!(
+								"Last Message Received: Got job for block {} at difficulty {}",
+								job.height, job.difficulty
+							);
+						}
+						info!(
+							LOGGER,
+							"Got a job at height {} and difficulty {}", job.height, job.difficulty
 						);
+						return self.send_miner_job(job);
 					}
-					info!(
-						LOGGER,
-						"Got a job at height {} and difficulty {}", job.height, job.difficulty
-					);
-					self.send_miner_job(job)
+					Ok(())
 				} else {
 					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write()?;
