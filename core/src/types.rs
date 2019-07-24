@@ -1,29 +1,29 @@
-use std::string;
-use std::ffi::CString;
 use std::collections::HashMap;
+use std::ffi::CString;
+use std::string;
 use std::sync::{Arc, RwLock};
 
 const MAX_NAME_LEN: usize = 256;
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Copy, Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Algorithm {
-    Cuckoo,
-    RandomX,
-	ProgPow,
+	Cuckoo = 1,
+	RandomX = 2,
+	ProgPow = 3,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlgorithmParams {
-    // edge_bits, nonces
+	// edge_bits, nonces
 	Cuckoo(u32, Vec<u64>),
 
-    // hash
+	// hash
 	RandomX([u8; 32]),
 
 	// mixHash
-	ProgPow([u8; 32])
+	ProgPow([u8; 32]),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -120,21 +120,21 @@ impl Stats {
 pub struct Solution(u64, u64, AlgorithmParams);
 
 impl Solution {
-    pub fn new(id: u64, nonce: u64, algo_params: AlgorithmParams) -> Self {
-        Solution(id, nonce, algo_params)
-    }
+	pub fn new(id: u64, nonce: u64, algo_params: AlgorithmParams) -> Self {
+		Solution(id, nonce, algo_params)
+	}
 
-    pub fn get_id(&self) -> u64 {
-        self.0
-    }
+	pub fn get_id(&self) -> u64 {
+		self.0
+	}
 
-    pub fn get_nonce(&self) -> u64 {
-        self.1
-    }
+	pub fn get_nonce(&self) -> u64 {
+		self.1
+	}
 
-    pub fn get_algorithm_params(&self) -> AlgorithmParams {
-        self.2.clone()
-    }
+	pub fn get_algorithm_params(&self) -> AlgorithmParams {
+		self.2.clone()
+	}
 }
 
 /// Data intended to be shared across threads

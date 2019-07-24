@@ -23,6 +23,7 @@ pub struct JobTemplate {
 	pub job_id: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
+	pub algorithm: String
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -53,6 +54,11 @@ pub struct LoginParams {
 	pub login: String,
 	pub pass: String,
 	pub agent: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct JobParams {
+	pub algorithm: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
