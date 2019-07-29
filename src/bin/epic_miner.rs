@@ -14,7 +14,7 @@
 
 //! Stratum client implementation, for standalone mining against a running
 //! epic node
-#[cfg(feature = "opencl")]
+#[cfg(feature = "cpu")]
 extern crate cuckoo_miner as cuckoo;
 #[cfg(feature = "cuda")]
 extern crate cuckoo_miner_cuda as cuckoo;
@@ -250,8 +250,29 @@ fn main() {
 	debug!(LOGGER, "Starting solvers");
 
 	match mining_config.algorithm.clone().unwrap() {
-		Algorithm::ProgPow => start_miner(progpow::PpMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),
-		Algorithm::RandomX => start_miner(randomx::RxMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),//randomx::RxMiner::new(&mining_config),
-		Algorithm::Cuckoo => start_miner(cuckoo::CuckooMiner::new(&mining_config), mining_config.algorithm.clone().unwrap(), &mining_config),
+		Algorithm::RandomX => start_miner(
+			randomx::RxMiner::new(&mining_config),
+			mining_config.algorithm.clone().unwrap(),
+			&mining_config,
+		), //randomx::RxMiner::new(&mining_config),
+		Algorithm::Cuckoo => start_miner(
+			cuckoo::CuckooMiner::new(&mining_config),
+			mining_config.algorithm.clone().unwrap(),
+			&mining_config,
+		),
+		#[cfg(feature = "opencl")]
+		Algorithm::ProgPow => start_miner(
+			progpow::PpMiner::new(&mining_config),
+			mining_config.algorithm.clone().unwrap(),
+			&mining_config,
+		),
+		#[cfg(feature = "cuda")]
+		Algorithm::ProgPow => start_miner(
+			progpow::PpMiner::new(&mining_config),
+			mining_config.algorithm.clone().unwrap(),
+			&mining_config,
+		),
+        #[allow(unreachable_patterns)]
+        _ => panic!("This algorithm is not supported in this build!"),
 	}
 }

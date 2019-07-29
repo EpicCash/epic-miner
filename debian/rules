@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 ROOTDIR := debian/epic-miner
+OPENCLROOTDIR := debian/epic-miner-opencl
 CUDAROOTDIR := debian/epic-miner-cuda
 
 .PHONY: clean
@@ -11,7 +12,7 @@ clean: debian/control
 	mkdir -p build
 
 .ONESHELL:
-build/epic-miner: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+build/epic-miner-opencl: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner
 	cd build/epic-miner
 	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=OFF -DETHASHCL=ON -DCMAKE_BUILD_TYPE=Release
@@ -31,29 +32,50 @@ prep:
 	dh_testroot
 	dh_prep
 
-.PHONY: epic-miner epic-miner-cuda
-epic-miner: build/epic-miner prep
+.PHONY: epic-miner epic-miner-opencl epic-miner-cuda
+epic-miner: prep
 	mkdir -p $(ROOTDIR)/var/log/epic/
 	mkdir -p $(ROOTDIR)/usr/bin/
 	mkdir -p $(ROOTDIR)/opt/epic-miner/
 	cp debian/epic-miner.sh $(ROOTDIR)/usr/bin/epic-miner
 	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
 	sed -i s/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g $(ROOTDIR)/opt/epic-miner/epic-miner.toml
-	cargo build --release --features opencl
-	./install_ocl_plugins.sh
-	cargo install --features opencl --path . --root $(ROOTDIR)/opt/epic-miner/
-	cargo install --path ocl_cuckaroo --root $(ROOTDIR)/opt/epic-miner/
+	cargo build --release
+	cargo install --path . --root $(ROOTDIR)/opt/epic-miner/
 	strip $(ROOTDIR)/opt/epic-miner/bin/epic-miner
-	strip $(ROOTDIR)/opt/epic-miner/bin/ocl_cuckaroo
-	mkdir -p $(ROOTDIR)/usr/lib/
-	cp build/epic-miner/libexternal/libppow.so $(ROOTDIR)/usr/lib/libppow.so
-	strip $(ROOTDIR)/usr/lib/libppow.so
-	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckaroo.so \;
-	strip $(ROOTDIR)/usr/lib/libocl_cuckaroo.so
-	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(ROOTDIR)/usr/lib/libocl_cuckatoo.so \;
-	strip $(ROOTDIR)/usr/lib/libocl_cuckatoo.so
 	mkdir -p $(ROOTDIR)/opt/epic-miner/bin/plugins/
 	cp target/release/plugins/*.cuckooplugin $(ROOTDIR)/opt/epic-miner/bin/plugins/
+	dh_installdocs -p$@
+	dh_installchangelogs -p$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
+epic-miner-opencl: build/epic-miner-opencl prep
+	mkdir -p $(OPENCLROOTDIR)/var/log/epic/
+	mkdir -p $(OPENCLROOTDIR)/usr/bin/
+	mkdir -p $(OPENCLROOTDIR)/opt/epic-miner-opencl/
+	cp debian/epic-miner-opencl.sh $(OPENCLROOTDIR)/usr/bin/epic-miner-opencl
+	cp epic-miner.toml $(OPENCLROOTDIR)/opt/epic-miner-opencl/
+	sed -i s/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g $(OPENCLROOTDIR)/opt/epic-miner-opencl/epic-miner.toml
+	cargo build --release --features opencl
+	./install_ocl_plugins.sh
+	cargo install --features opencl --path . --root $(OPENCLROOTDIR)/opt/epic-miner-opencl/
+	cargo install --path ocl_cuckaroo --root $(OPENCLROOTDIR)/opt/epic-miner-opencl/
+	strip $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/epic-miner
+	strip $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/ocl_cuckaroo
+	mkdir -p $(OPENCLROOTDIR)/usr/lib/
+	cp build/epic-miner/libexternal/libppow.so $(OPENCLROOTDIR)/usr/lib/libppow.so
+	strip $(OPENCLROOTDIR)/usr/lib/libppow.so
+	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(OPENCLROOTDIR)/usr/lib/libocl_cuckaroo.so \;
+	strip $(OPENCLROOTDIR)/usr/lib/libocl_cuckaroo.so
+	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(OPENCLROOTDIR)/usr/lib/libocl_cuckatoo.so \;
+	strip $(OPENCLROOTDIR)/usr/lib/libocl_cuckatoo.so
+	mkdir -p $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/plugins/
+	cp target/release/plugins/*.cuckooplugin $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/plugins/
 	dh_installdocs -p$@
 	dh_installchangelogs -p$@
 	dh_compress -p$@
@@ -69,8 +91,8 @@ epic-miner-cuda: build/epic-miner-cuda prep
 	mkdir -p $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/
 	cp debian/epic-miner-cuda.sh $(CUDAROOTDIR)/usr/bin/epic-miner-cuda
 	cp epic-miner.toml $(CUDAROOTDIR)/opt/epic-miner-cuda/
-	cargo build --release --features cuda
-	cargo install --features cuda --path . --root $(CUDAROOTDIR)/opt/epic-miner-cuda/
+	cargo build --release --no-default-features --features cuda,tui
+	cargo install --no-default-features --features cuda,tui --path . --root $(CUDAROOTDIR)/opt/epic-miner-cuda/
 	strip $(CUDAROOTDIR)/opt/epic-miner-cuda/bin/epic-miner
 	mkdir -p $(CUDAROOTDIR)/usr/lib/
 	cp build/epic-miner-cuda/libexternal/libppow.so $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/libppow.so
@@ -88,4 +110,4 @@ epic-miner-cuda: build/epic-miner-cuda prep
 
 
 .PHONY: binary binary-arch binary-indep
-binary binary-arch binary-indep: debian/control build epic-miner epic-miner-cuda
+binary binary-arch binary-indep: debian/control build epic-miner epic-miner-opencl epic-miner-cuda

@@ -259,6 +259,9 @@ impl Controller {
 		match self.algorithm {
 			Algorithm::Cuckoo => "cuckoo".to_string(),
 			Algorithm::RandomX => "randomx".to_string(),
+			#[cfg(feature = "opencl")]
+			Algorithm::ProgPow => "progpow".to_string(),
+			#[cfg(feature = "cuda")]
 			Algorithm::ProgPow => "progpow".to_string(),
 		}
 	}
@@ -267,6 +270,9 @@ impl Controller {
 		match algo.as_str() {
 			"cuckoo" => Algorithm::Cuckoo,
 			"randomx" => Algorithm::RandomX,
+			#[cfg(feature = "opencl")]
+			"progpow" => Algorithm::ProgPow,
+			#[cfg(feature = "cuda")]
 			"progpow" => Algorithm::ProgPow,
 			_ => panic!("Algorithm is not supported")
 		}
