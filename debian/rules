@@ -39,7 +39,7 @@ epic-miner: prep
 	mkdir -p $(ROOTDIR)/opt/epic-miner/
 	cp debian/epic-miner.sh $(ROOTDIR)/usr/bin/epic-miner
 	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
-	sed -i s/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g $(ROOTDIR)/opt/epic-miner/epic-miner.toml
+	sed -i 's/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g' $(ROOTDIR)/opt/epic-miner/epic-miner.toml
 	cargo build --release
 	cargo install --path . --root $(ROOTDIR)/opt/epic-miner/
 	strip $(ROOTDIR)/opt/epic-miner/bin/epic-miner
@@ -60,7 +60,7 @@ epic-miner-opencl: build/epic-miner-opencl prep
 	mkdir -p $(OPENCLROOTDIR)/opt/epic-miner-opencl/
 	cp debian/epic-miner-opencl.sh $(OPENCLROOTDIR)/usr/bin/epic-miner-opencl
 	cp epic-miner.toml $(OPENCLROOTDIR)/opt/epic-miner-opencl/
-	sed -i s/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g $(OPENCLROOTDIR)/opt/epic-miner-opencl/epic-miner.toml
+	sed -i 's/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g' $(OPENCLROOTDIR)/opt/epic-miner-opencl/epic-miner.toml
 	cargo build --release --features opencl
 	./install_ocl_plugins.sh
 	cargo install --features opencl --path . --root $(OPENCLROOTDIR)/opt/epic-miner-opencl/
