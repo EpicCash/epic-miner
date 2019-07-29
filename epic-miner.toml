@@ -25,7 +25,7 @@ log_to_file = true
 file_log_level = "Debug"
 
 # Log file path
-log_file_path = "/var/log/epic/epic-miner.log"
+log_file_path = "./epic-miner.log"
 
 # Whether to append to the log file (true), or replace it on every run (false)
 log_file_append = true

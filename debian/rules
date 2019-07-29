@@ -26,15 +26,19 @@ build/epic-miner-cuda: Cargo.toml config core cuckoo-miner debian etc features o
 .PHONY: build build-arch build-indep
 build build-arch build-indep: build/epic-miner build/epic-miner-cuda
 
-.PHONY: epic-miner epic-miner-cuda
-epic-miner: build/epic-miner
+.PHONY: prep
+prep:
 	dh_testroot
 	dh_prep
+
+.PHONY: epic-miner epic-miner-cuda
+epic-miner: build/epic-miner prep
 	mkdir -p $(ROOTDIR)/var/log/epic/
 	mkdir -p $(ROOTDIR)/usr/bin/
 	mkdir -p $(ROOTDIR)/opt/epic-miner/
 	cp debian/epic-miner.sh $(ROOTDIR)/usr/bin/epic-miner
 	cp epic-miner.toml $(ROOTDIR)/opt/epic-miner/
+	sed -i s/\.\/epic-miner.log/\/var\/log\/epic\/epic-miner.log/g $(ROOTDIR)/opt/epic-miner/epic-miner.toml
 	cargo build --release --features opencl
 	./install_ocl_plugins.sh
 	cargo install --features opencl --path . --root $(ROOTDIR)/opt/epic-miner/
@@ -59,9 +63,7 @@ epic-miner: build/epic-miner
 	dh_md5sums -p$@
 	dh_builddeb -p$@
 
-epic-miner-cuda: build/epic-miner-cuda
-	dh_testroot
-	dh_prep
+epic-miner-cuda: build/epic-miner-cuda prep
 	mkdir -p $(CUDAROOTDIR)/var/log/epic/
 	mkdir -p $(CUDAROOTDIR)/usr/bin/
 	mkdir -p $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/
