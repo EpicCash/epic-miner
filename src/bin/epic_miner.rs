@@ -223,7 +223,7 @@ fn main() {
 	});
 	println!(
 		"Starting Epic-Miner from config file at: {}",
-		global_config.config_file_path.unwrap().to_str().unwrap()
+		global_config.config_file_path.expect("Couldn't find the configuration file").to_str().expect("The path to the configuration file is not a valid utf-8 string")
 	);
 	// Init logging
 	let mut log_conf = global_config
