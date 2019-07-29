@@ -259,9 +259,6 @@ impl Controller {
 		match self.algorithm {
 			Algorithm::Cuckoo => "cuckoo".to_string(),
 			Algorithm::RandomX => "randomx".to_string(),
-			#[cfg(feature = "opencl")]
-			Algorithm::ProgPow => "progpow".to_string(),
-			#[cfg(feature = "cuda")]
 			Algorithm::ProgPow => "progpow".to_string(),
 		}
 	}
