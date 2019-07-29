@@ -16,6 +16,8 @@
 //! stratum server
 
 use bufstream::BufStream;
+use core::Algorithm;
+use core::{AlgorithmParams, Solution};
 use native_tls::{TlsConnector, TlsStream};
 use serde_json;
 use stats;
@@ -27,8 +29,6 @@ use std::thread;
 use time;
 use types;
 use util::LOGGER;
-use core::{Solution, AlgorithmParams};
-use core::Algorithm;
 
 #[derive(Debug)]
 pub enum Error {
@@ -274,7 +274,7 @@ impl Controller {
 			"progpow" => Algorithm::ProgPow,
 			#[cfg(feature = "cuda")]
 			"progpow" => Algorithm::ProgPow,
-			_ => panic!("Algorithm is not supported")
+			_ => panic!("Algorithm is not supported"),
 		}
 	}
 
@@ -283,7 +283,9 @@ impl Controller {
 			id: self.last_request_id.to_string(),
 			jsonrpc: "2.0".to_string(),
 			method: "getjobtemplate".to_string(),
-			params: Some(serde_json::to_value(types::JobParams { algorithm: self.parse_algorithm() })?),
+			params: Some(serde_json::to_value(types::JobParams {
+				algorithm: self.parse_algorithm(),
+			})?),
 		};
 		let req_str = serde_json::to_string(&req)?;
 		{
@@ -336,11 +338,7 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
-	fn send_message_submit(
-		&mut self,
-		height: u64,
-		solution: Solution,
-	) -> Result<(), Error> {
+	fn send_message_submit(&mut self, height: u64, solution: Solution) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
 			job_id: solution.get_id(),

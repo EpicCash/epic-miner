@@ -14,13 +14,15 @@
 
 //! Main Menu definition
 
-use cursive::Cursive;
-use cursive::view::View;
 use cursive::align::HAlign;
+use cursive::direction::Orientation;
 use cursive::event::{EventResult, Key};
 use cursive::view::Identifiable;
-use cursive::views::{BoxView, LinearLayout, OnEventView, SelectView, StackView, TextView, ViewRef};
-use cursive::direction::Orientation;
+use cursive::view::View;
+use cursive::views::{
+	BoxView, LinearLayout, OnEventView, SelectView, StackView, TextView, ViewRef,
+};
+use cursive::Cursive;
 
 use tui::constants::*;
 

@@ -16,8 +16,8 @@
 
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
 use cursive::view::View;
+use cursive::Cursive;
 use stats::Stats;
 
 /// Main message struct to communicate between the UI and

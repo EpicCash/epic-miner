@@ -18,16 +18,16 @@
 extern crate cuckoo_miner as cuckoo;
 #[cfg(feature = "cuda")]
 extern crate cuckoo_miner_cuda as cuckoo;
-extern crate randomx_miner as randomx;
-#[cfg(feature = "opencl")]
-extern crate progpow_miner_opencl as progpow;
 #[cfg(feature = "cuda")]
 extern crate progpow_miner_cuda as progpow;
+#[cfg(feature = "opencl")]
+extern crate progpow_miner_opencl as progpow;
+extern crate randomx_miner as randomx;
 
 extern crate epic_miner_config as config;
+extern crate epic_miner_core as core;
 extern crate epic_miner_plugin as plugin;
 extern crate epic_miner_util as util;
-extern crate epic_miner_core as core;
 
 extern crate bufstream;
 extern crate native_tls;
@@ -38,7 +38,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate slog;
 
-#[cfg(feature="tui")]
+#[cfg(feature = "tui")]
 extern crate cursive;
 
 pub mod client;
@@ -46,7 +46,7 @@ pub mod mining;
 pub mod stats;
 pub mod types;
 
-#[cfg(feature="tui")]
+#[cfg(feature = "tui")]
 pub mod tui;
 
 use config::GlobalConfig;
@@ -54,10 +54,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use std::thread;
 
-use util::{init_logger, LOGGER};
-use core::{Miner, Algorithm};
-use core::errors::MinerError;
 use core::config::MinerConfig;
+use core::errors::MinerError;
+use core::{Algorithm, Miner};
+use util::{init_logger, LOGGER};
 
 // include build information
 pub mod built_info {
@@ -92,45 +92,45 @@ fn log_build_info() {
 	trace!(LOGGER, "{}", deps);
 }
 
-#[cfg(feature="tui")]
+#[cfg(feature = "tui")]
 mod with_tui {
-	use std::sync::{mpsc, Arc, RwLock};
-	use std::sync::atomic::{AtomicBool, Ordering};
-	use std::thread;
-	use types;
-	use stats;
-	use tui::ui;
 	use core::Algorithm;
+	use stats;
+	use std::sync::atomic::{AtomicBool, Ordering};
+	use std::sync::{mpsc, Arc, RwLock};
+	use std::thread;
+	use tui::ui;
+	use types;
 
-    pub fn start_tui(
-	    s: Arc<RwLock<stats::Stats>>,
-	    client_tx: mpsc::Sender<types::ClientMessage>,
-	    miner_tx: mpsc::Sender<types::MinerMessage>,
-	    stop: Arc<AtomicBool>,
+	pub fn start_tui(
+		s: Arc<RwLock<stats::Stats>>,
+		client_tx: mpsc::Sender<types::ClientMessage>,
+		miner_tx: mpsc::Sender<types::MinerMessage>,
+		stop: Arc<AtomicBool>,
 		algorithm: Algorithm,
-    ) {
-	    // Run the UI controller.. here for now for simplicity to access
-	    // everything it might need
-	    println!("Starting Epic Miner in UI mode...");
-	    println!("Waiting for solvers to shutdown...");
-	    let _ = thread::Builder::new()
-		    .name("ui".to_string())
-		    .spawn(move || {
-			    let mut controller = ui::Controller::new(algorithm).unwrap_or_else(|e| {
-				    panic!("Error loading UI controller: {}", e);
-			    });
-			    controller.run(s.clone());
-			    // Shut down everything else on tui exit
-			    let _ = client_tx.send(types::ClientMessage::Shutdown);
-			    let _ = miner_tx.send(types::MinerMessage::Shutdown);
-			    stop.store(true, Ordering::Relaxed);
-		    });
-    }
+	) {
+		// Run the UI controller.. here for now for simplicity to access
+		// everything it might need
+		println!("Starting Epic Miner in UI mode...");
+		println!("Waiting for solvers to shutdown...");
+		let _ = thread::Builder::new()
+			.name("ui".to_string())
+			.spawn(move || {
+				let mut controller = ui::Controller::new(algorithm).unwrap_or_else(|e| {
+					panic!("Error loading UI controller: {}", e);
+				});
+				controller.run(s.clone());
+				// Shut down everything else on tui exit
+				let _ = client_tx.send(types::ClientMessage::Shutdown);
+				let _ = miner_tx.send(types::MinerMessage::Shutdown);
+				stop.store(true, Ordering::Relaxed);
+			});
+	}
 }
 
 fn start_miner<T>(mut miner: T, algorithm: Algorithm, mining_config: &MinerConfig)
 where
-	T: Miner + 'static
+	T: Miner + 'static,
 {
 	let stats = Arc::new(RwLock::new(stats::Stats::default()));
 
@@ -165,7 +165,7 @@ where
 	}
 
 	if mining_config.run_tui {
-        #[cfg(feature="tui")]
+		#[cfg(feature = "tui")]
 		with_tui::start_tui(
 			stats.clone(),
 			cc.tx.clone(),
@@ -174,7 +174,7 @@ where
 			mining_config.algorithm.clone().unwrap(),
 		);
 
-        #[cfg(not(feature="tui"))]
+		#[cfg(not(feature = "tui"))]
 		warn!(LOGGER, "Epic-miner was built with TUI support disabled!");
 	} else {
 		tui_stopped.store(true, Ordering::Relaxed);
@@ -272,7 +272,7 @@ fn main() {
 			mining_config.algorithm.clone().unwrap(),
 			&mining_config,
 		),
-        #[allow(unreachable_patterns)]
-        _ => panic!("This algorithm is not supported in this build!"),
+		#[allow(unreachable_patterns)]
+		_ => panic!("This algorithm is not supported in this build!"),
 	}
 }
