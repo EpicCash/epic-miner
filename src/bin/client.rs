@@ -263,15 +263,15 @@ impl Controller {
 		}
 	}
 
-	fn get_parse_algorithm(&self, algo: String) -> Algorithm {
+	fn get_parse_algorithm(&self, algo: String) -> Result<Algorithm, Error> {
 		match algo.as_str() {
-			"cuckoo" => Algorithm::Cuckoo,
-			"randomx" => Algorithm::RandomX,
+			"cuckoo" => Ok(Algorithm::Cuckoo),
+			"randomx" => Ok(Algorithm::RandomX),
 			#[cfg(feature = "opencl")]
-			"progpow" => Algorithm::ProgPow,
+			"progpow" => Ok(Algorithm::ProgPow),
 			#[cfg(feature = "cuda")]
-			"progpow" => Algorithm::ProgPow,
-			_ => panic!("Algorithm is not supported"),
+			"progpow" => Ok(Algorithm::ProgPow),
+			_ => Err(Error::RequestError("Algorithm isn't supported!".to_owned())),
 		}
 	}
 
@@ -384,7 +384,8 @@ impl Controller {
 				Some(params) => {
 					let job = serde_json::from_value::<types::JobTemplate>(params)?;
 					info!(LOGGER, "Got a new job: {:?}", job);
-					if self.get_parse_algorithm(job.algorithm.clone()) == self.algorithm {
+					let algorithm = self.get_parse_algorithm(job.algorithm.clone())?;
+					if algorithm  == self.algorithm {
 						return self.send_miner_job(job);
 					}
 
@@ -431,7 +432,8 @@ impl Controller {
 			"getjobtemplate" => {
 				if let Some(result) = res.result {
 					let job: types::JobTemplate = serde_json::from_value(result)?;
-					if self.algorithm == self.get_parse_algorithm(job.algorithm.clone()) {
+					let algorithm = self.get_parse_algorithm(job.algorithm.clone())?;
+					if self.algorithm == algorithm {
 						{
 							let mut stats = self.stats.write()?;
 							stats.client_stats.last_message_received = format!(
