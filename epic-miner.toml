@@ -37,7 +37,7 @@ log_file_append = true
 [mining]
 
 # Cuckoo, RandomX, ProgPow
-algorithm = "ProgPow"
+algorithm = "RandomX"
 
 # how many cpu core the mine will use(RandomX)
 cpu_threads = 3
