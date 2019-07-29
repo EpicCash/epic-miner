@@ -25,7 +25,7 @@ build/epic-miner-cuda: Cargo.toml config core cuckoo-miner debian etc features o
 	make
 
 .PHONY: build build-arch build-indep
-build build-arch build-indep: build/epic-miner build/epic-miner-cuda
+build build-arch build-indep: build/epic-miner-opencl build/epic-miner-cuda
 
 .PHONY: prep
 prep:
