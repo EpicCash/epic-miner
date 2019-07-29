@@ -73,7 +73,7 @@ lazy_static! {
 				.append(config.log_file_append)
 				.truncate(!config.log_file_append)
 				.open(&config.log_file_path)
-				.unwrap();
+				.expect("Permission denied to access the file or the file doesn't exist");
 
 			let file_decorator = slog_term::PlainDecorator::new(file);
 			let file_drain = slog_term::FullFormat::new(file_decorator).build().fuse();
