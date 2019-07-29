@@ -16,17 +16,17 @@
 
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
-use cursive::view::View;
-use cursive::views::{BoxView, LinearLayout, TextView};
 use cursive::direction::Orientation;
 use cursive::traits::*;
+use cursive::view::View;
+use cursive::views::{BoxView, LinearLayout, TextView};
+use cursive::Cursive;
 
 use tui::constants::*;
 use tui::types::*;
 
-use stats::Stats;
 use info_strings;
+use stats::Stats;
 
 /// Version view
 pub struct TUIVersionView;

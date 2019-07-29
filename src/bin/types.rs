@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use serde_json::Value;
 use core::{AlgorithmParams, Solution};
+use serde_json::Value;
 
 /// Types used for stratum
 
@@ -23,7 +23,7 @@ pub struct JobTemplate {
 	pub job_id: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
-	pub algorithm: String
+	pub algorithm: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,7 +81,7 @@ pub struct WorkerStatus {
 
 /// Types used for internal communication from stratum client to miner
 #[derive(Serialize, Deserialize, Debug)]
-pub enum MinerMessage{
+pub enum MinerMessage {
 	// Height, difficulty, pre_pow
 	ReceivedJob(u64, u64, u64, String),
 	StopJob,
@@ -89,7 +89,7 @@ pub enum MinerMessage{
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ClientMessage{
+pub enum ClientMessage {
 	// height, job_id, edge_bits, nonce, pow
 	FoundSolution(u64, Solution),
 	Shutdown,

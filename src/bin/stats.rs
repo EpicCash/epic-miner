@@ -15,11 +15,10 @@
 //! Miner stats collection types, to be used by tests, logging or GUI/TUI
 //! to collect information about mining status
 
+use core::Stats as CrStats;
 /// Struct to return relevant information about the mining process
 /// back to interested callers (such as the TUI)
-
 use plugin;
-use core::Stats as CrStats;
 
 #[derive(Clone)]
 pub struct SolutionStats {

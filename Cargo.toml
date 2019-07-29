@@ -13,9 +13,10 @@ autobins = false
 members = ["config", "util", "plugin"]
 
 [features]
-default = ["tui"]
-opencl = ["ocl_cuckatoo", "ocl_cuckaroo", "progpow_miner_opencl", "progpow_opencl", "cuckoo_miner"]
+default = ["tui", "cpu"]
+opencl = ["ocl_cuckatoo", "ocl_cuckaroo", "progpow_miner_opencl", "progpow_opencl"]
 cuda = ["progpow_miner_cuda", "progpow_cuda", "cuckoo_miner_cuda"]
+cpu = ["cuckoo_miner"]
 tui = ["cursive"]
 
 [[bin]]
