@@ -8,6 +8,37 @@ pub struct GpuConfig {
 	pub driver: u8,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RxConfig {
+	#[serde(default = "default_threads")]
+	pub threads: u64,
+	#[serde(default = "default_rx_bool")]
+	pub jit: bool,
+	#[serde(default = "default_rx_bool")]
+	pub hard_aes: bool,
+	#[serde(default = "default_rx_bool")]
+	pub large_pages: bool,
+}
+
+fn default_threads() -> u64 {
+	1
+}
+
+fn default_rx_bool() -> bool {
+	false
+}
+
+impl Default for RxConfig {
+	fn default() -> Self {
+		RxConfig {
+			jit: false,
+			hard_aes: false,
+			large_pages: false,
+			threads: 1
+		}
+	}
+}
+
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EpicMinerPluginConfig {
@@ -33,7 +64,7 @@ pub struct MinerConfig {
 	/// Algorithm will be use to miner
 	pub algorithm: Option<Algorithm>,
 
-	pub cpu_threads: u8,
+	pub randomx_config: RxConfig,
 
 	/// Whether to run the tui
 	pub run_tui: bool,
@@ -63,8 +94,8 @@ pub struct MinerConfig {
 impl Default for MinerConfig {
 	fn default() -> MinerConfig {
 		MinerConfig {
-			algorithm: Some(Algorithm::Cuckoo),
-			cpu_threads: 1,
+			algorithm: Some(Algorithm::RandomX),
+			randomx_config: RxConfig::default(),
 			run_tui: false,
 			miner_plugin_dir: None,
 			miner_plugin_config: vec![],
