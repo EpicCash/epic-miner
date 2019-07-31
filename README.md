@@ -29,7 +29,13 @@ cd epic-miner
 git submodule update --init --recursive
 ```
 
-To build the project you will have to specify if you are going to mine using `OPENCL` or `CUDA`. To mine using **CPUs/GPUs** use `OPENCL`. Execute the following line in the terminal to build with `OPENCL`:
+To build the project you will have to specify if you are going to mine using `only CPU`, `OPENCL` or `CUDA`. To mine using only **CPU**, execute the following line in the terminal:
+
+```sh
+cargo build
+```
+
+To mine using **CPUs/GPUs** use `OPENCL`. Execute the following line in the terminal to build with `OPENCL`:
 
 ```sh
 cargo build --features opencl
@@ -38,7 +44,7 @@ cargo build --features opencl
 If you have NVIDIA GPUs and your system has **the latest nvidia drivers and the Cuda toolkit 9+ installed**, you can build the cuda plugins using the following command:
 
 ```sh
-cargo build --features cuda
+cargo build --no-default-features --features cuda,tui
 ```
 
 ## What was built
