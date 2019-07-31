@@ -4,7 +4,7 @@ use std::thread;
 use std::time;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-use core::config::MinerConfig;
+use core::config::{MinerConfig, RxConfig};
 use core::errors::MinerError;
 use core::miner::Miner;
 use core::types::AlgorithmParams;
@@ -30,8 +30,6 @@ pub struct RxMiner {
 	/// Data shared across threads
 	pub shared_data: Arc<RwLock<JobSharedData>>,
 
-	cpu_threads: u8,
-
 	// randomx mining state
 	state: Arc<RwLock<RxState>>,
 
@@ -43,6 +41,8 @@ pub struct RxMiner {
 
 	/// Solver has stopped and cleanly shutdown
 	solver_stopped_rxs: Vec<mpsc::Receiver<ControlMessage>>,
+
+	threads: u8,
 }
 
 unsafe impl Send for RxMiner {}
@@ -60,7 +60,7 @@ impl RxMiner {
 		{
 			let mut s = shared_data.write().unwrap();
 			s.stats[instance].set_plugin_name(ALGORITHM_NAME);
-			s.stats[instance].set_device_name("cpu");
+			s.stats[instance].set_device_name("CPU");
 		}
 
 		let mut iter_count = 0;
@@ -153,24 +153,29 @@ impl RxMiner {
 impl Miner for RxMiner {
 	fn new(configs: &MinerConfig) -> RxMiner {
 		let mut rx_state = RxState::new();
+
+		let config = configs.randomx_config.clone();
 		rx_state.full_mem = true;
-		rx_state.hard_aes = true;
-		rx_state.jit_compiler = true;
+
+		rx_state.hard_aes = config.hard_aes;
+		rx_state.large_pages = config.large_pages;
+		rx_state.jit_compiler = config.jit;
+
 		RxMiner {
 			state: Arc::new(RwLock::new(rx_state)),
 			shared_data: Arc::new(RwLock::new(JobSharedData::new(
-				configs.cpu_threads as usize,
+				config.threads as usize,
 			))),
 			control_txs: vec![],
 			solver_loop_txs: vec![],
 			solver_stopped_rxs: vec![],
-			cpu_threads: configs.cpu_threads,
+			threads: config.threads as u8,
 		}
 	}
 
 	fn start_solvers(&mut self) -> Result<(), MinerError> {
 		let s = self.state.clone();
-		let cpu_threads = self.cpu_threads.clone();
+		let cpu_threads = self.threads.clone();
 
 		let th = thread::spawn(move || {
 			let mut rx = s.write().unwrap();

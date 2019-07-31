@@ -39,9 +39,6 @@ log_file_append = true
 # Cuckoo, RandomX, ProgPow
 algorithm = "RandomX"
 
-# how many cpu core the mine will use(RandomX)
-cpu_threads = 3
-
 # whether to run the tui
 run_tui = true
 
@@ -62,6 +59,12 @@ stratum_server_tls_enabled = false
 #to the executable
 
 #miner_plugin_dir = "target/debug/plugins"
+
+[mining.randomx_config]
+threads = 1
+jit = false
+large_pages = false
+hard_aes = false
 
 ###############################################################
 ### GPU CONFIGURATION (works just on the progpow)
