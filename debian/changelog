@@ -1,3 +1,32 @@
+epic-miner (1.0.4-1) UNRELEASED; urgency=medium
+
+  [ renantkn ]
+  * Fix configuration file errors
+
+  [ Yuri Albuquerque ]
+  * Formatting.
+  * The dependency list was wrong.
+  * Fixing sed call.
+  * Removing non-existent target.
+  * Forgot to add epic-miner-opencl to debian/control
+  * I can convert progpow to string without problems.
+  * RandomX should be the default mining algorithm.
+
+  [ Aron Castro ]
+  * Fix get parse algorithm
+
+  [ renantkn ]
+  * Add mine using only cpu
+
+  [ Aron Castro ]
+  * Add some parameters for randomx miner
+  * Update progpow rust
+
+  [ Yuri Albuquerque ]
+  * Removing cuckatoo from the build.
+
+ -- Ubuntu <ubuntu@ip-172-31-16-240.ec2.internal>  Wed, 31 Jul 2019 18:57:15 +0000
+
 epic-miner (1.0.3-1) unstable; urgency=high
 
   * Adding a CPU-only variant for the miner
