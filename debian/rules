@@ -12,13 +12,13 @@ clean: debian/control
 	mkdir -p build
 
 .ONESHELL:
-build/epic-miner-opencl: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+build/epic-miner-opencl: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner
 	cd build/epic-miner
 	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=OFF -DETHASHCL=ON -DCMAKE_BUILD_TYPE=Release
 	make
 
-build/epic-miner-cuda: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckaroo ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
+build/epic-miner-cuda: Cargo.toml config core cuckoo-miner debian etc features ocl_cuckatoo plugin progpow-miner progpow-rust randomx-miner randomx-rust src tests util
 	mkdir -p build/epic-miner-cuda
 	cd build/epic-miner-cuda
 	cmake ../../progpow-rust/pp_full/lib -DETHASHCUDA=ON -DETHASHCL=OFF -DCMAKE_BUILD_TYPE=Release
@@ -64,14 +64,10 @@ epic-miner-opencl: build/epic-miner-opencl prep
 	cargo build --release --features opencl
 	./install_ocl_plugins.sh
 	cargo install --features opencl --path . --root $(OPENCLROOTDIR)/opt/epic-miner-opencl/
-	cargo install --path ocl_cuckaroo --root $(OPENCLROOTDIR)/opt/epic-miner-opencl/
 	strip $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/epic-miner
-	strip $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/ocl_cuckaroo
 	mkdir -p $(OPENCLROOTDIR)/usr/lib/
 	cp build/epic-miner/libexternal/libppow.so $(OPENCLROOTDIR)/usr/lib/libppow.so
 	strip $(OPENCLROOTDIR)/usr/lib/libppow.so
-	find target/release -iname libocl_cuckaroo.so -exec cp "{}" $(OPENCLROOTDIR)/usr/lib/libocl_cuckaroo.so \;
-	strip $(OPENCLROOTDIR)/usr/lib/libocl_cuckaroo.so
 	find target/release -iname libocl_cuckatoo.so -exec cp "{}" $(OPENCLROOTDIR)/usr/lib/libocl_cuckatoo.so \;
 	strip $(OPENCLROOTDIR)/usr/lib/libocl_cuckatoo.so
 	mkdir -p $(OPENCLROOTDIR)/opt/epic-miner-opencl/bin/plugins/
