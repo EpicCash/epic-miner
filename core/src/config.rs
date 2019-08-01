@@ -31,8 +31,8 @@ fn default_rx_bool() -> bool {
 impl Default for RxConfig {
 	fn default() -> Self {
 		RxConfig {
-			jit: false,
-			hard_aes: false,
+			jit: true,
+			hard_aes: true,
 			large_pages: false,
 			threads: 1
 		}

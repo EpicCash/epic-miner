@@ -61,10 +61,10 @@ stratum_server_tls_enabled = false
 #miner_plugin_dir = "target/debug/plugins"
 
 [mining.randomx_config]
-threads = 1
-jit = false
+threads = 3
+jit = true
 large_pages = false
-hard_aes = false
+hard_aes = true
 
 ###############################################################
 ### GPU CONFIGURATION (works just on the progpow)
