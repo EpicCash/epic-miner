@@ -1,3 +1,13 @@
+epic-miner (1.0.5-1) bionic; urgency=medium
+
+  [ Aron Castro ]
+  * Fix parameters for randomx
+
+  [ Yuri Albuquerque ]
+  * 1.0.4-1 should be a release
+
+ -- Ubuntu <ubuntu@ip-172-31-16-240.ec2.internal>  Thu, 01 Aug 2019 14:16:52 +0000
+
 epic-miner (1.0.4-1) unstable; urgency=medium
 
   [ renantkn ]
