@@ -12,7 +12,7 @@ use core::util;
 use core::{ControlMessage, JobSharedData, JobSharedDataType, Solution, Stats};
 
 use bigint::uint::U256;
-use randomx::{calculate, RxState};
+use randomx::{calculate, RxState, RxAction};
 use util::LOGGER;
 
 const MAX_HASHS: u64 = 100;
@@ -51,6 +51,7 @@ unsafe impl Sync for RxMiner {}
 impl RxMiner {
 	fn solver_thread(
 		instance: usize,
+		threads: u8,
 		state: Arc<RwLock<RxState>>,
 		shared_data: JobSharedDataType,
 		control_rx: mpsc::Receiver<ControlMessage>,
@@ -66,13 +67,8 @@ impl RxMiner {
 		let mut iter_count = 0;
 		let mut last_solution_time = 0;
 		let mut paused = true;
-
-		let vm = {
-			unsafe {
-				let mut rx = state.write().unwrap();
-				rx.create_vm().unwrap()
-			}
-		};
+		let mut current_seed = [u8::max_value(); 32];
+		let mut vm = None;
 
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
@@ -86,6 +82,12 @@ impl RxMiner {
 			}
 
 			if paused {
+				{
+					let mut s = shared_data.write().unwrap();
+					s.stats[instance].set_plugin_name(ALGORITHM_NAME);
+					s.stats[instance].hashes_per_sec = 0;
+				}
+
 				thread::sleep(time::Duration::from_micros(100));
 				continue;
 			}
@@ -98,6 +100,7 @@ impl RxMiner {
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
+			let seed = { shared_data.read().unwrap().seed.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
@@ -110,10 +113,29 @@ impl RxMiner {
 					1
 				});
 
+			if current_seed != seed {
+				let mut rx = state.write().unwrap();
+				current_seed = seed.clone();
+
+				if let Ok(state) = rx.init_cache(&seed) {
+					if let RxAction::Changed = state {
+						rx.init_dataset(threads).expect("Isn't possible initialize RandomX dataset!");
+					}
+				};
+
+				if let None = vm {
+					vm = Some(*rx.create_vm().unwrap().clone());
+				}
+			}
+
 			let start = timestamp();
-			let results = (0..MAX_HASHS)
-				.map(|x| calculate(&vm, &mut header, nonce + x))
-				.collect::<Vec<U256>>();
+			let results = if let Some(ref v) = vm {
+				(0..MAX_HASHS)
+					.map(|x| calculate(v, &mut header, nonce + x))
+					.collect::<Vec<U256>>()
+			} else {
+				panic!("randomx vm is not initialized");
+			};
 			let end = timestamp();
 
 			iter_count += MAX_HASHS;
@@ -175,19 +197,9 @@ impl Miner for RxMiner {
 
 	fn start_solvers(&mut self) -> Result<(), MinerError> {
 		let s = self.state.clone();
-		let cpu_threads = self.threads.clone();
+		let threads = self.threads.clone();
 
-		let th = thread::spawn(move || {
-			let mut rx = s.write().unwrap();
-			unsafe {
-				rx.init_cache(&[0; 32], true).expect("Isn't possible initialize RandomX cache!");
-				rx.init_dataset(cpu_threads).expect("Isn't possible initialize RandomX dataset!");
-			}
-		});
-
-		th.join();
-
-		for i in 0..(cpu_threads as usize) {
+		for i in 0..(threads as usize) {
 			let state = self.state.clone();
 			let shared_data = self.shared_data.clone();
 
@@ -202,6 +214,7 @@ impl Miner for RxMiner {
 			thread::spawn(move || {
 				let _ = RxMiner::solver_thread(
 					i,
+					threads as u8,
 					state,
 					shared_data,
 					control_rx,
@@ -236,6 +249,7 @@ impl Miner for RxMiner {
 		post_nonce: &str, // Post-nonce portion of header
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
+		seed: [u8; 32],
 	) -> Result<(), MinerError> {
 		let mut sd = self.shared_data.write().unwrap();
 		let mut paused = false;
@@ -250,6 +264,7 @@ impl Miner for RxMiner {
 		sd.pre_nonce = pre_nonce.to_owned();
 		sd.post_nonce = post_nonce.to_owned();
 		sd.difficulty = difficulty;
+		sd.seed = seed;
 		if paused {
 			self.resume_solvers();
 		}

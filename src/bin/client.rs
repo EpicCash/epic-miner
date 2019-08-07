@@ -267,9 +267,6 @@ impl Controller {
 		match algo.as_str() {
 			"cuckoo" => Ok(Algorithm::Cuckoo),
 			"randomx" => Ok(Algorithm::RandomX),
-			#[cfg(feature = "opencl")]
-			"progpow" => Ok(Algorithm::ProgPow),
-			#[cfg(feature = "cuda")]
 			"progpow" => Ok(Algorithm::ProgPow),
 			_ => Err(Error::RequestError("Algorithm isn't supported!".to_owned())),
 		}
@@ -361,11 +358,24 @@ impl Controller {
 	}
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
+		let difficulty = {
+			let mut diff = 1;
+	
+			for (algo, difficulty) in &job.difficulty {
+				if self.algorithm == self.get_parse_algorithm(algo.to_string())? {
+					diff = *difficulty;
+					break;
+				}
+			}
+
+			diff
+		};
+
 		let miner_message =
-			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow);
+			types::MinerMessage::ReceivedJob(job.height, job.job_id, difficulty, job.pre_pow, job.seed);
 		let mut stats = self.stats.write()?;
 		stats.client_stats.last_message_received = format!(
-			"Last Message Received: Start Job for Height: {}, Difficulty: {}",
+			"Last Message Received: Start Job for Height: {}, Difficulty: {:?}",
 			job.height, job.difficulty
 		);
 		self.miner_tx.send(miner_message).map_err(|e| e.into())
@@ -384,12 +394,7 @@ impl Controller {
 				Some(params) => {
 					let job = serde_json::from_value::<types::JobTemplate>(params)?;
 					info!(LOGGER, "Got a new job: {:?}", job);
-					let algorithm = self.get_parse_algorithm(job.algorithm.clone())?;
-					if algorithm  == self.algorithm {
-						return self.send_miner_job(job);
-					}
-
-					Ok(())
+					self.send_miner_job(job)
 				}
 			},
 			_ => Err(Error::RequestError("Unknonw method".to_owned())),
@@ -432,22 +437,18 @@ impl Controller {
 			"getjobtemplate" => {
 				if let Some(result) = res.result {
 					let job: types::JobTemplate = serde_json::from_value(result)?;
-					let algorithm = self.get_parse_algorithm(job.algorithm.clone())?;
-					if self.algorithm == algorithm {
-						{
-							let mut stats = self.stats.write()?;
-							stats.client_stats.last_message_received = format!(
-								"Last Message Received: Got job for block {} at difficulty {}",
-								job.height, job.difficulty
-							);
-						}
-						info!(
-							LOGGER,
-							"Got a job at height {} and difficulty {}", job.height, job.difficulty
+					{
+						let mut stats = self.stats.write()?;
+						stats.client_stats.last_message_received = format!(
+							"Last Message Received: Got job for block {} at difficulty {:?}",
+							job.height, job.difficulty
 						);
-						return self.send_miner_job(job);
 					}
-					Ok(())
+					info!(
+						LOGGER,
+						"Got a job at height {} and difficulty {:?}", job.height, job.difficulty
+					);
+					self.send_miner_job(job)
 				} else {
 					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write()?;

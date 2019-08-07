@@ -23,7 +23,8 @@ pub trait Miner: Send + Sync {
 		height: u64,      // Job height
 		pre_nonce: &str,  // Pre-nonce portion of header
 		post_nonce: &str, // Post-nonce portion of header
-		difficulty: u64,) -> Result<(), MinerError>;
+		difficulty: u64,
+		seed: [u8; 32], ) -> Result<(), MinerError>;
 
     /// Starts solvers, ready for jobs via job control
     fn start_solvers(&mut self) -> Result<(), MinerError>;
