@@ -26,29 +26,34 @@ fn timestamp() -> u64 {
 	since_the_epoch.as_millis() as u64
 }
 
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum EpochState {
+	Waiting,
+	Loading,
+	Loaded,
+	Running
+}
+
 #[derive(Debug, Clone)]
 struct EpochSeed {
 	start_height: u64,
 	end_height: u64,
 	seed: [u8; 32],
-	loading: bool,
-	loaded: bool,
+	state: EpochState,
 }
 
 impl EpochSeed {
 	fn new(
 		start_height: u64,
 		end_height: u64,
-		seed: [u8; 32],
-		loading: bool,
-		loaded: bool, ) -> Self
+		seed: [u8; 32], ) -> Self
 	{
 		EpochSeed {
 			start_height,
 			end_height,
 			seed,
-			loading,
-			loaded
+			state: EpochState::Waiting,
 		}
 	}
 }
@@ -98,30 +103,54 @@ impl RxMiner {
 		let current_seed = self.current_seed.clone();
 		let threads = self.config.threads;
 		let rx_state = self.state.clone();
-		let shared = self.shared_data.clone();
+
+		let is_loading = {
+			let mut epochs = epochs.read().unwrap();
+			(*epochs)
+				.iter()
+				.filter(|x| x.state == EpochState::Loading || x.state == EpochState::Loaded)
+				.count() > 0
+		};
 		
+		if is_loading {
+			return Ok(());
+		}
+
 		thread::spawn(move || {
-			let mut epochs = epochs.write().unwrap();
-			let mut epoch_first = (*epochs)
-				.iter_mut()
-				.filter(|x| !x.loaded && !x.loading && x.seed != current_seed)
-				.next();
+			let mut seed = [0u8; 32];
+			let mut seed_changed = false;
 
-			if let Some(ref mut epoch) = epoch_first {
-				let seed = epoch.seed.clone();
+			{
+				let mut epochs = epochs.write().unwrap();
+				let mut epoch_first = (*epochs)
+					.iter_mut()
+					.filter(|x| x.state == EpochState::Waiting && x.seed != current_seed)
+					.next();
+
+				if let Some(ref mut epoch) = epoch_first {
+					seed = epoch.seed.clone();
+					seed_changed = true;
+					epoch.state = EpochState::Loading;
+				}
+			}
+
+			if seed_changed {
 				let mut rx = rx_state.write().unwrap();
-
-				epoch.loading = true;
-
 				if let Ok(c) = rx.init_cache(&seed) {
 					if let RxAction::Changed = c {
 						rx.init_dataset(threads as u8);
 					}
-				};
+				}
 
-				epoch.loading = false;
-				epoch.loaded = true;
-				println!("finalized");
+				let mut epochs = epochs.write().unwrap();
+				let mut epoch_first = (*epochs)
+					.iter_mut()
+					.filter(|x| x.state == EpochState::Loading)
+					.next();
+	
+				if let Some(ref mut epoch) = epoch_first {
+					epoch.state = EpochState::Loaded;
+				}
 			}
 		});
 
@@ -129,19 +158,18 @@ impl RxMiner {
 	}
 
 	fn swap_dataset(&mut self, height: u64) -> Result<(), &'static str> {
-		let epochs = self.epochs.read().unwrap();
-		let epochs = epochs
-			.iter()
-			.filter(|x| x.loaded && x.start_height < height && x.end_height >= height)
-			.collect::<Vec<&EpochSeed>>();
+		let current_seed = self.current_seed.clone();
+		let mut epochs = self.epochs.write().unwrap();
+		let mut epoch = epochs
+			.iter_mut()
+			.filter(|x| x.state == EpochState::Loaded && x.start_height < height && x.end_height >= height)
+			.next();
 
-		if let Some(ref e) = epochs.first() {
-			if self.current_seed != e.seed {
-				println!("arrived here");
-				self.current_seed = e.seed.clone();
-				let mut rx = self.state.write().unwrap();
-				rx.update_vms();
-			}
+		if let Some(ref mut e) = epoch {
+			e.state = EpochState::Running;
+			self.current_seed = e.seed.clone();
+			let mut rx = self.state.write().unwrap();
+			rx.update_vms();
 		}
 
 		Ok(())
@@ -208,9 +236,9 @@ impl RxMiner {
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
 			
-			let epochs_state = { epochs.read().unwrap().iter().filter(|x| x.loaded && x.start_height < height && x.end_height >= height ).count() == 0 };
+			let epochs_state = { epochs.read().unwrap().iter().filter(|x| x.state == EpochState::Running && x.start_height < height && x.end_height >= height ).count() == 0 };
 			
-			if epochs_state{
+			if epochs_state {
 				{
 					let mut s = shared_data.write().unwrap();
 					s.stats[instance].hashes_per_sec = 0;
@@ -381,7 +409,7 @@ impl Miner for RxMiner {
 		let mut epochs = self.epochs.write().unwrap();
 		if epochs.iter().filter(|x| x.seed == next_seed).count() == 0 {
 			epochs.push(
-				EpochSeed::new(start_height, end_height, next_seed, false, false, ));
+				EpochSeed::new(start_height, end_height, next_seed, ));
 		}
 	}
 
