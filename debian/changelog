@@ -1,3 +1,21 @@
+epic-miner (1.2.0-1) bionic; urgency=medium
+
+  [ Aron Castro ]
+  * Add randomx seed
+
+  [ Yuri Albuquerque ]
+  * Small fix for epic-miner-opencl's package.
+
+  [ Aron Castro ]
+  * Add epoch seed and load of multiple dataset
+  * Update randomx rust
+  * Fix load multiple datasets same time
+
+  [ Yuri Albuquerque ]
+  * Aborting the package build in case of an error.
+
+ -- Ubuntu <ubuntu@ip-172-31-16-240.ec2.internal>  Fri, 09 Aug 2019 21:49:38 +0000
+
 epic-miner (1.0.7-1) bionic; urgency=medium
 
   [ Yuri Albuquerque ]

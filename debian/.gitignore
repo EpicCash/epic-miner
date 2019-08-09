@@ -1,4 +1,7 @@
 *.debhelper.log
+.debhelper
+epic-miner-cuda/
+epic-miner-opencl/
 *.substvars
 epic-miner/
 files
