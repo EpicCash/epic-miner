@@ -40,7 +40,7 @@ log_file_append = true
 algorithm = "RandomX"
 
 # whether to run the tui
-run_tui = true
+run_tui = false
 
 # listening epic stratum server url
 stratum_server_addr = "127.0.0.1:3416"
@@ -101,9 +101,9 @@ driver = 2
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckatoo_lean_cpu_compat_31"
+plugin_name = "cuckatoo_lean_cpu_compat_19"
 [mining.miner_plugin_config.parameters]
-nthreads = 4
+nthreads = 2
 
 # As above, but for processors supporting avx2
 
