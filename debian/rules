@@ -34,6 +34,7 @@ prep:
 
 .PHONY: epic-miner epic-miner-opencl epic-miner-cuda
 epic-miner: prep
+	@set -e
 	mkdir -p $(ROOTDIR)/var/log/epic/
 	mkdir -p $(ROOTDIR)/usr/bin/
 	mkdir -p $(ROOTDIR)/opt/epic-miner/
@@ -55,6 +56,7 @@ epic-miner: prep
 	dh_builddeb -p$@
 
 epic-miner-opencl: build/epic-miner-opencl prep
+	@set -e
 	mkdir -p $(OPENCLROOTDIR)/var/log/epic/
 	mkdir -p $(OPENCLROOTDIR)/usr/bin/
 	mkdir -p $(OPENCLROOTDIR)/opt/epic-miner-opencl/
@@ -82,6 +84,7 @@ epic-miner-opencl: build/epic-miner-opencl prep
 	dh_builddeb -p$@
 
 epic-miner-cuda: build/epic-miner-cuda prep
+	@set -e
 	mkdir -p $(CUDAROOTDIR)/var/log/epic/
 	mkdir -p $(CUDAROOTDIR)/usr/bin/
 	mkdir -p $(CUDAROOTDIR)/opt/epic-miner-cuda/lib/

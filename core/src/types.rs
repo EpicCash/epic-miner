@@ -36,6 +36,8 @@ pub enum ControlMessage {
 	Resume,
 	/// Solver reporting stopped
 	SolverStopped(usize),
+
+	SeedChanged,
 }
 
 #[derive(Clone)]

@@ -32,6 +32,7 @@ pub struct Controller {
 	current_height: u64,
 	current_job_id: u64,
 	current_target_diff: u64,
+	current_seed: [u8; 32],
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
@@ -53,6 +54,7 @@ impl Controller {
 			current_height: 0,
 			current_job_id: 0,
 			current_target_diff: 0,
+			current_seed: [0; 32],
 			stats: stats,
 		})
 	}
@@ -85,6 +87,12 @@ impl Controller {
 							"",
 							diff,
 						)
+					}
+					types::MinerMessage::ReceivedSeed(epochs) => {
+						for (start_height, end_height, seed) in epochs {
+							miner.add_epoch(start_height, end_height, seed);
+						}
+						Ok(())
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
