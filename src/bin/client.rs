@@ -358,6 +358,10 @@ impl Controller {
 	}
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
+		let miner_message =
+			types::MinerMessage::ReceivedSeed(job.epochs);
+		self.miner_tx.send(miner_message)?;
+
 		let difficulty = {
 			let mut diff = 1;
 	
@@ -372,12 +376,18 @@ impl Controller {
 		};
 
 		let miner_message =
-			types::MinerMessage::ReceivedJob(job.height, job.job_id, difficulty, job.pre_pow, job.seed);
+			types::MinerMessage::ReceivedJob(job.height, job.job_id, difficulty, job.pre_pow);
 		let mut stats = self.stats.write()?;
 		stats.client_stats.last_message_received = format!(
 			"Last Message Received: Start Job for Height: {}, Difficulty: {:?}",
 			job.height, job.difficulty
 		);
+		self.miner_tx.send(miner_message).map_err(|e| e.into())
+	}
+
+	fn send_miner_seed(&mut self, job: types::EpochTemplate) -> Result<(), Error> {
+		let miner_message =
+			types::MinerMessage::ReceivedSeed(job.epochs);
 		self.miner_tx.send(miner_message).map_err(|e| e.into())
 	}
 
@@ -524,6 +534,21 @@ impl Controller {
 					error!(LOGGER, "Failed to log in: {:?}", err);
 				}
 				Ok(())
+			}
+			"seed" => {
+				if let Some(result) = res.result {
+					let job: types::EpochTemplate = serde_json::from_value(result)?;
+					self.send_miner_seed(job)
+				} else {
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let mut stats = self.stats.write()?;
+					stats.client_stats.last_message_received = format!(
+						"Last Message Received: Failed to get seed template: {:?}",
+						err
+					);
+					error!(LOGGER, "Failed to get a seed template: {:?}", err);
+					Ok(())
+				}
 			}
 			// unknown method response
 			_ => {

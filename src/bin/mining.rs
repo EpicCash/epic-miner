@@ -76,19 +76,23 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Miner received message: {:?}", message);
 				let result = match message {
-					types::MinerMessage::ReceivedJob(height, job_id, diff, pre_pow, seed) => {
+					types::MinerMessage::ReceivedJob(height, job_id, diff, pre_pow) => {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						self.current_seed = seed.clone();
 						miner.notify(
 							self.current_job_id as u32,
 							self.current_height,
 							&pre_pow,
 							"",
 							diff,
-							seed,
 						)
+					}
+					types::MinerMessage::ReceivedSeed(epochs) => {
+						for (start_height, end_height, seed) in epochs {
+							miner.add_epoch(start_height, end_height, seed);
+						}
+						Ok(())
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");

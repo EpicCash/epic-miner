@@ -18,12 +18,17 @@ use serde_json::Value;
 /// Types used for stratum
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct EpochTemplate {
+	pub epochs: Vec<(u64, u64, [u8; 32])>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct JobTemplate {
 	pub height: u64,
 	pub job_id: u64,
 	pub difficulty: Vec<(String, u64)>,
 	pub pre_pow: String,
-	pub seed: [u8; 32],
+	pub epochs: Vec<(u64,u64,[u8;32])>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -83,7 +88,9 @@ pub struct WorkerStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MinerMessage {
 	// Height, difficulty, pre_pow
-	ReceivedJob(u64, u64, u64, String, [u8; 32]),
+	ReceivedJob(u64, u64, u64, String),
+	// current_seed, next_seed
+	ReceivedSeed(Vec<(u64,u64, [u8; 32])>),
 	StopJob,
 	Shutdown,
 }

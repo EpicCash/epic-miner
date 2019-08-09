@@ -217,7 +217,6 @@ impl Miner for PpMiner {
 		post_nonce: &str, // Post-nonce portion of header
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
-		_seed: [u8; 32],
 	) -> Result<(), MinerError> {
 		let mut sd = self.shared_data.write().unwrap();
 		let mut paused = false;

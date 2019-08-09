@@ -36,6 +36,8 @@ pub enum ControlMessage {
 	Resume,
 	/// Solver reporting stopped
 	SolverStopped(usize),
+
+	SeedChanged,
 }
 
 #[derive(Clone)]
@@ -161,9 +163,6 @@ pub struct JobSharedData {
 
 	/// Current stats
 	pub stats: Vec<Stats>,
-
-	/// Randomx seed
-	pub seed: [u8; 32],
 }
 
 impl Default for JobSharedData {
@@ -176,7 +175,6 @@ impl Default for JobSharedData {
 			difficulty: 0,
 			solutions: Vec::new(),
 			stats: vec![],
-			seed: [0u8; 32],
 		}
 	}
 }
@@ -191,7 +189,6 @@ impl JobSharedData {
 			difficulty: 1,
 			solutions: Vec::new(),
 			stats: vec![Stats::default(); num_solvers],
-			seed: [0u8; 32],
 		}
 	}
 }
