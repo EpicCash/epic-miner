@@ -1,3 +1,10 @@
+epic-miner (1.4.0-1) bionic; urgency=medium
+
+  [ Yuri Albuquerque ]
+  * Removing unnecessary mut.
+
+ -- Ubuntu <ubuntu@ip-172-31-16-240.ec2.internal>  Wed, 14 Aug 2019 20:52:58 +0000
+
 epic-miner (1.2.0-1) bionic; urgency=medium
 
   [ Aron Castro ]

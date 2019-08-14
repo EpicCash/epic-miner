@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "epic_miner"
-version = "1.2.0"
+version = "1.4.0"
 dependencies = [
  "backtrace 0.3.32 (registry+https://github.com/rust-lang/crates.io-index)",
  "bufstream 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
