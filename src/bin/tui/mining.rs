@@ -110,7 +110,7 @@ pub struct TUIMiningView;
 impl TUIMiningView {
 	pub fn create_algorithm(algorithm: Algorithm) -> Box<View> {
 		let table_view = {
-			let mut table = TableView::<Stats, MiningDeviceColumn>::new()
+			let table = TableView::<Stats, MiningDeviceColumn>::new()
 				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
 					c.width_percent(20)
 				})
