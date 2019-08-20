@@ -29,6 +29,7 @@ pub struct JobTemplate {
 	pub difficulty: Vec<(String, u64)>,
 	pub pre_pow: String,
 	pub epochs: Vec<(u64,u64,[u8;32])>,
+	pub algorithm: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
