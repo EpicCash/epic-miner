@@ -100,7 +100,7 @@ impl RxMiner {
 
 	fn load_next_dataset(&mut self) -> Result<(), MinerError>
 	{
-		let mut epochs = self.epochs.clone();
+		let epochs = self.epochs.clone();
 		let current_seed = self.current_seed.clone();
 		let threads = self.config.threads;
 		let rx_state = self.state.clone();
@@ -211,6 +211,7 @@ impl RxMiner {
 		let mut iter_count = 0;
 		let mut last_solution_time = 0;
 		let mut paused = true;
+        let mut rx = state.write().unwrap();
 		let mut vm = None;
 
 		loop {
@@ -238,16 +239,12 @@ impl RxMiner {
 				let mut s = shared_data.write().unwrap();
 				s.stats[instance].set_plugin_name(ALGORITHM_NAME);
 			}
-
-			if let None = vm {
-				let mut rx = state.write().unwrap();
-
-				if !rx.is_initialized() {
-					continue;
-				}
-		
-				vm = Some(rx.create_vm().unwrap().clone());
-			}
+            if vm.is_none() {
+                if !rx.is_initialized() {
+                    continue;
+                }
+                vm = Some(rx.create_vm().unwrap());
+            }
 
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
