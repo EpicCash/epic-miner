@@ -32,7 +32,8 @@ enum EpochState {
 	Waiting,
 	Loading,
 	Loaded,
-	Running
+	Running,
+	Failed(String),
 }
 
 #[derive(Debug, Clone)]
@@ -97,7 +98,7 @@ impl RxMiner {
 		Arc::new(RwLock::new(rx_state))
 	}
 
-	fn init_epoch_dataset(&mut self) -> Result<(), MinerError>
+	fn load_next_dataset(&mut self) -> Result<(), MinerError>
 	{
 		let mut epochs = self.epochs.clone();
 		let current_seed = self.current_seed.clone();
@@ -110,6 +111,11 @@ impl RxMiner {
 				.iter()
 				.filter(|x| x.state == EpochState::Loading || x.state == EpochState::Loaded)
 				.count() > 0
+			||
+			(*epochs)
+				.iter()
+				.filter(|x| x.state == EpochState::Waiting)
+				.count() == 0
 		};
 		
 		if is_loading {
@@ -135,11 +141,15 @@ impl RxMiner {
 			}
 
 			if seed_changed {
+				let mut result = EpochState::Loaded;
 				let mut rx = rx_state.write().unwrap();
-				if let Ok(c) = rx.init_cache(&seed) {
-					if let RxAction::Changed = c {
-						rx.init_dataset(threads as u8);
+
+				if let Ok(RxAction::Changed) = rx.init_cache(&seed) {
+					if let Err(e) = rx.init_dataset(threads as u8) {
+						result = EpochState::Failed(e.to_owned());
 					}
+				} else {
+					result = EpochState::Failed("We can't initialize a new dataset".to_owned());
 				}
 
 				let mut epochs = epochs.write().unwrap();
@@ -149,7 +159,7 @@ impl RxMiner {
 					.next();
 	
 				if let Some(ref mut epoch) = epoch_first {
-					epoch.state = EpochState::Loaded;
+					epoch.state = result;
 				}
 			}
 		});
@@ -158,14 +168,21 @@ impl RxMiner {
 	}
 
 	fn swap_dataset(&mut self, height: u64) -> Result<(), &'static str> {
-		let current_seed = self.current_seed.clone();
 		let mut epochs = self.epochs.write().unwrap();
 		let mut epoch = epochs
 			.iter_mut()
-			.filter(|x| x.state == EpochState::Loaded && x.start_height < height && x.end_height >= height)
+			.filter(|x| x.start_height < height && x.end_height >= height)
 			.next();
 
 		if let Some(ref mut e) = epoch {
+			match e.state.clone() {
+				EpochState::Failed(e) => {
+					panic!(e);
+				},
+				EpochState::Loaded => {},
+				_ => return Ok(()),
+			}
+
 			e.state = EpochState::Running;
 			self.current_seed = e.seed.clone();
 			let mut rx = self.state.write().unwrap();
@@ -235,7 +252,6 @@ impl RxMiner {
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
-			
 			let epochs_state = { epochs.read().unwrap().iter().filter(|x| x.state == EpochState::Running && x.start_height < height && x.end_height >= height ).count() == 0 };
 			
 			if epochs_state {
@@ -374,8 +390,6 @@ impl Miner for RxMiner {
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
 	) -> Result<(), MinerError> {
-		self.swap_dataset(height);
-
 		let mut paused = false;
 		{
 			let mut sd = self.shared_data.write().unwrap();
@@ -385,6 +399,7 @@ impl Miner for RxMiner {
 				self.pause_solvers();
 				paused = true;
 			}
+
 			sd.job_id = job_id;
 			sd.height = height;
 			sd.pre_nonce = pre_nonce.to_owned();
@@ -393,10 +408,12 @@ impl Miner for RxMiner {
 		}
 
 		if paused {
+			self.swap_dataset(height);
+			self.load_next_dataset();
+
 			self.resume_solvers();
 		}
 
-		self.init_epoch_dataset();
 		Ok(())
 	}
 
