@@ -42,6 +42,7 @@ function (build_cuda_target sources target props)
 	endif (BUILD_CUDA_PLUGINS)
 endfunction()
 
+IF (NOT MSVC)
 ##################################################################################
 ### CUCKATOO (Asic Tuned) ########################################################
 ##################################################################################
@@ -58,6 +59,7 @@ set (AT_LEAN_CPU_SRC
 			cuckoo/src/cuckatoo/lean.hpp
 			cuckoo/src/cuckatoo/lean.cpp
 			${BLAKE_2B})
+
 
 build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_19 "-DNSIPHASH=1 -DATOMIC -DEDGEBITS=19")
 build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_31 "-mno-avx2 -DNSIPHASH=4 -DATOMIC -DEDGEBITS=31")
@@ -135,3 +137,5 @@ set (AR_CUDA_SRC cuckoo/src/cuckaroo/mean.cu ${BLAKE_2B} )
 
 #build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=2 -DEDGEBITS=19")
 #build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_29 "-DEDGEBITS=29")
+
+ENDIF()
