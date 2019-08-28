@@ -32,7 +32,8 @@ enum EpochState {
 	Waiting,
 	Loading,
 	Loaded,
-	Running
+	Running,
+	Failed(String),
 }
 
 #[derive(Debug, Clone)]
@@ -97,37 +98,42 @@ impl RxMiner {
 		Arc::new(RwLock::new(rx_state))
 	}
 
-	fn init_epoch_dataset(&mut self) -> Result<(), MinerError>
+	fn load_next_dataset(&mut self) -> Result<(), MinerError>
 	{
 		let mut epochs = self.epochs.clone();
 		let current_seed = self.current_seed.clone();
 		let threads = self.config.threads;
 		let rx_state = self.state.clone();
-
 		let is_loading = {
 			let mut epochs = epochs.read().unwrap();
 			(*epochs)
 				.iter()
 				.filter(|x| x.state == EpochState::Loading || x.state == EpochState::Loaded)
 				.count() > 0
+			||
+			(*epochs)
+				.iter()
+				.filter(|x| x.state == EpochState::Waiting)
+				.count() == 0
 		};
-		
 		if is_loading {
 			return Ok(());
 		}
 
+
+		debug!(LOGGER, "There's a new dataset waiting to be generate...");
+
 		thread::spawn(move || {
 			let mut seed = [0u8; 32];
 			let mut seed_changed = false;
-
 			{
 				let mut epochs = epochs.write().unwrap();
 				let mut epoch_first = (*epochs)
 					.iter_mut()
 					.filter(|x| x.state == EpochState::Waiting && x.seed != current_seed)
 					.next();
-
 				if let Some(ref mut epoch) = epoch_first {
+					debug!(LOGGER, "Trying to load a new dataset for height: {}", epoch.start_height);
 					seed = epoch.seed.clone();
 					seed_changed = true;
 					epoch.state = EpochState::Loading;
@@ -135,11 +141,16 @@ impl RxMiner {
 			}
 
 			if seed_changed {
+				let mut result = EpochState::Loaded;
 				let mut rx = rx_state.write().unwrap();
-				if let Ok(c) = rx.init_cache(&seed) {
-					if let RxAction::Changed = c {
-						rx.init_dataset(threads as u8);
+
+				if let Ok(RxAction::Changed) = rx.init_cache(&seed) {
+					if let Err(e) = rx.init_dataset(threads as u8) {
+						error!(LOGGER, "Tried to initialize a new dataset: {:?}", e);
+						result = EpochState::Failed(e.to_owned());
 					}
+				} else {
+					result = EpochState::Failed("Is not possible initialize a new dataset".to_owned());
 				}
 
 				let mut epochs = epochs.write().unwrap();
@@ -147,9 +158,9 @@ impl RxMiner {
 					.iter_mut()
 					.filter(|x| x.state == EpochState::Loading)
 					.next();
-	
+
 				if let Some(ref mut epoch) = epoch_first {
-					epoch.state = EpochState::Loaded;
+					epoch.state = result;
 				}
 			}
 		});
@@ -158,14 +169,23 @@ impl RxMiner {
 	}
 
 	fn swap_dataset(&mut self, height: u64) -> Result<(), &'static str> {
-		let current_seed = self.current_seed.clone();
 		let mut epochs = self.epochs.write().unwrap();
 		let mut epoch = epochs
 			.iter_mut()
-			.filter(|x| x.state == EpochState::Loaded && x.start_height < height && x.end_height >= height)
+			.filter(|x| x.start_height < height && x.end_height >= height)
 			.next();
 
 		if let Some(ref mut e) = epoch {
+			match e.state.clone() {
+				EpochState::Failed(e) => {
+					panic!(e);
+				},
+				EpochState::Loaded => {},
+				_ => return Ok(()),
+			}
+
+			debug!(LOGGER, "Changing datasets.");
+
 			e.state = EpochState::Running;
 			self.current_seed = e.seed.clone();
 			let mut rx = self.state.write().unwrap();
@@ -198,7 +218,7 @@ impl RxMiner {
 
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
-				//debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
+				debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
 				match message {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
@@ -229,13 +249,13 @@ impl RxMiner {
 					continue;
 				}
 		
-				vm = Some(rx.create_vm().unwrap().clone());
+				vm = Some(rx.create_vm().unwrap());
+				debug!(LOGGER, "RandomX VM initialized!");
 			}
 
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
-			
 			let epochs_state = { epochs.read().unwrap().iter().filter(|x| x.state == EpochState::Running && x.start_height < height && x.end_height >= height ).count() == 0 };
 			
 			if epochs_state {
@@ -244,6 +264,7 @@ impl RxMiner {
 					s.stats[instance].hashes_per_sec = 0;
 				}
 
+				debug!(LOGGER, "It is waiting the dataset finish the loading....");
 				thread::sleep(time::Duration::from_micros(100));
 				continue;
 			}
@@ -261,11 +282,13 @@ impl RxMiner {
 					1
 				});
 
-			let vm_ref = vm.as_ref().unwrap();
 			let start = timestamp();
-			let results = (0..MAX_HASHS)
-				.map(|x| calculate(vm_ref, &mut header, nonce + x))
-				.collect::<Vec<U256>>();
+			let results = {
+				let vm_ref = vm.as_ref().map(|x| x.write().unwrap()).unwrap();
+				(0..MAX_HASHS)
+					.map(|x| calculate(&vm_ref, &mut header, nonce + x))
+					.collect::<Vec<U256>>()
+			};
 			let end = timestamp();
 
 			iter_count += MAX_HASHS;
@@ -374,8 +397,6 @@ impl Miner for RxMiner {
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
 	) -> Result<(), MinerError> {
-		self.swap_dataset(height);
-
 		let mut paused = false;
 		{
 			let mut sd = self.shared_data.write().unwrap();
@@ -385,6 +406,7 @@ impl Miner for RxMiner {
 				self.pause_solvers();
 				paused = true;
 			}
+
 			sd.job_id = job_id;
 			sd.height = height;
 			sd.pre_nonce = pre_nonce.to_owned();
@@ -392,11 +414,13 @@ impl Miner for RxMiner {
 			sd.difficulty = difficulty;
 		}
 
+		self.swap_dataset(height);
+
 		if paused {
+			self.load_next_dataset();
 			self.resume_solvers();
 		}
 
-		self.init_epoch_dataset();
 		Ok(())
 	}
 
@@ -428,7 +452,7 @@ impl Miner for RxMiner {
 		for t in self.solver_loop_txs.iter() {
 			let _ = t.send(ControlMessage::Stop);
 		}
-		//debug!(LOGGER, "Stop message sent");
+		debug!(LOGGER, "Stop message sent");
 	}
 
 	/// Tells current solvers to stop and wait
@@ -439,7 +463,7 @@ impl Miner for RxMiner {
 		for t in self.solver_loop_txs.iter() {
 			let _ = t.send(ControlMessage::Pause);
 		}
-		//debug!(LOGGER, "Pause message sent");
+		debug!(LOGGER, "Pause message sent");
 	}
 
 	/// Tells current solvers to stop and wait
@@ -450,7 +474,7 @@ impl Miner for RxMiner {
 		for t in self.solver_loop_txs.iter() {
 			let _ = t.send(ControlMessage::Resume);
 		}
-		//debug!(LOGGER, "Resume message sent");
+		debug!(LOGGER, "Resume message sent");
 	}
 
 	/// block until solvers have all exited
@@ -459,7 +483,7 @@ impl Miner for RxMiner {
 			while let Some(message) = r.iter().next() {
 				match message {
 					ControlMessage::SolverStopped(i) => {
-						//debug!(LOGGER, "Solver stopped: {}", i);
+						debug!(LOGGER, "Solver stopped: {}", i);
 						break;
 					}
 					_ => {}
