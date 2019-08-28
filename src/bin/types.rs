@@ -27,6 +27,7 @@ pub struct JobTemplate {
 	pub height: u64,
 	pub job_id: u64,
 	pub difficulty: Vec<(String, u64)>,
+	pub block_difficulty: Vec<(String, u64)>,
 	pub pre_pow: String,
 	pub epochs: Vec<(u64,u64,[u8;32])>,
 	pub algorithm: String,
