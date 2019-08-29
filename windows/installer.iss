@@ -40,10 +40,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: ".\target\release\epic-miner.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\epic-miner.toml"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\plugins\cuckatoo_lean_cpu_avx2_31.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
-Source: ".\plugins\cuckatoo_lean_cpu_compat_31.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
-Source: ".\plugins\cuckatoo_lean_cpu_compat_19.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
-Source: ".\plugins\ocl_cuckatoo.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
+Source: ".\target\release\plugins\cuckatoo_lean_cpu_avx2_31.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
+Source: ".\target\release\plugins\cuckatoo_lean_cpu_compat_31.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
+Source: ".\target\release\plugins\cuckatoo_lean_cpu_compat_19.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
+Source: ".\target\release\plugins\ocl_cuckatoo.cuckooplugin"; DestDir: "{app}\plugins"; Flags: ignoreversion
 Source: ".\dependencies\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Icons]

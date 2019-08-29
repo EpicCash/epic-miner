@@ -67,6 +67,7 @@ build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_avx2_31 "-mavx2 -DNSIPHA
 
 ### AT MEAN CPU TARGETS  #########################################
 
+IF (NOT WIN32)
 set (AT_MEAN_CPU_SRC
 			cuckoo/src/cuckatoo/cuckatoo.h
 			cuckoo/src/cuckatoo/bitmap.hpp
@@ -82,6 +83,7 @@ build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_compat_19 "-DXBITS=2 -DN
 build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DSAVEEDGES -DEDGEBITS=19")
 build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_compat_31 "-mno-avx2 -DXBITS=8 -DNSIPHASH=4 -DEXPANDROUND=8 -DCOMPRESSROUND=22 -DSAVEEDGES -DEDGEBITS=31")
 build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_avx2_31 "-mavx2 -DXBITS=8 -DNSIPHASH=8 -DEXPANDROUND=8 -DCOMPRESSROUND=22 -DSAVEEDGES -DEDGEBITS=31")
+ENDIF()
 
 ### AT LEAN CUDA TARGETS  #########################################
 
