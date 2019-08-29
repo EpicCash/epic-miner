@@ -1,3 +1,19 @@
+epic-miner (1.6.0-1) bionic; urgency=medium
+
+  [ Aron Castro ]
+  * Disable build cuckoo plugins in msvc
+  * Fix cursive for windows
+  * Add state for failed dataset and try to fix race conditional
+  * Add vm with locks and log info
+  * Update randomx and progpow version
+  * Add windows installer script
+  * FIx installer version
+  * Remove cuckoo plugins
+  * Add block difficulty in the job template
+  * Fix cuckoo build in the windows and change installer plugins paths
+
+ -- Ubuntu <ubuntu@ip-172-31-16-240.ec2.internal>  Thu, 29 Aug 2019 16:17:47 +0000
+
 epic-miner (1.5.0-1) bionic; urgency=medium
 
   [ Aron Castro ]

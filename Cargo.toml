@@ -1,6 +1,6 @@
 [package]
 name = "epic_miner"
-version = "1.5.0"
+version = "1.6.0"
 authors = ["Epic Developers <mimblewimble@lists.launchpad.net>"]
 description = "Mining software for Epic, supports CPU and CUDA GPUs."
 build = "src/build/build.rs"
