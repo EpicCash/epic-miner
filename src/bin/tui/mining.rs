@@ -112,15 +112,15 @@ impl TUIMiningView {
 		let table_view = {
 			let table = TableView::<Stats, MiningDeviceColumn>::new()
 				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
-					c.width_percent(20)
+					c.width_percent(25)
 				})
 				.column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
-					c.width_percent(5)
+					c.width_percent(10)
 				})
 				.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
 					c.width_percent(20)
 				})
-				.column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
+				// .column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
 				.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
 					c.width_percent(8)
 				});
@@ -144,6 +144,14 @@ impl TUIMiningView {
 				.child(LinearLayout::new(Orientation::Horizontal).child(
 					TextView::new("Connection Status: Starting...").with_id("mining_server_status"),
 				))
+				.child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Current Network Difficulty:  ").with_id("current_network_diff")),
+				)
+				.child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Network Needed Algorithm:  ").with_id("current_algo_needed")),
+				)
 				.child(
 					LinearLayout::new(Orientation::Horizontal)
 						.child(TextView::new("Mining Status: ").with_id("mining_status")),
@@ -187,15 +195,15 @@ impl TUIStatusListener for TUIMiningView {
 	fn create() -> Box<View> {
 		let table_view = TableView::<Stats, MiningDeviceColumn>::new()
 			.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
-				c.width_percent(20)
+				c.width_percent(25)
 			})
 			.column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
-				c.width_percent(5)
+				c.width_percent(10)
 			})
 			.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
 				c.width_percent(20)
 			})
-			.column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
+			// .column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
 			.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
 				c.width_percent(8)
 			})
@@ -214,6 +222,14 @@ impl TUIStatusListener for TUIMiningView {
 				.child(
 					LinearLayout::new(Orientation::Horizontal)
 						.child(TextView::new("Mining Status: ").with_id("mining_status")),
+				)
+				.child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Current Network Difficulty:  ").with_id("current_network_diff")),
+				)
+				.child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Network Needed Algorithm:  ").with_id("current_algo_needed")),
 				)
 				.child(
 					LinearLayout::new(Orientation::Horizontal)
@@ -263,20 +279,19 @@ impl TUIStatusListener for TUIMiningView {
 			if client_stats.connected {
 				if mining_stats.combined_gps() == 0.0 {
 					(
-						"Mining Status: Starting miner and awaiting first graph time..."
+						"Mining Status: Starting miner and awaiting for the server..."
 							.to_string(),
 						" ".to_string(),
 					)
 				} else {
 					(
 						format!(
-							"Mining Status: Mining at height {} at {:.*} GPS",
+							"Mining Status: Mining with {} at height {}",
+							client_stats.my_algorithm,
 							mining_stats.block_height,
-							4,
-							mining_stats.combined_gps()
 						),
 						format!(
-							"Target Share Difficulty {}",
+							"Target Share Difficulty: {}",
 							mining_stats.target_difficulty.to_string()
 						),
 					)
@@ -296,7 +311,12 @@ impl TUIStatusListener for TUIMiningView {
 		c.call_on_id("network_info", |t: &mut TextView| {
 			t.set_content(basic_network_info);
 		});
-
+		c.call_on_id("current_algo_needed", |t: &mut TextView| {
+			t.set_content(format!("Network Needed Algorithm: {}", client_stats.algorithm_needed));
+		});
+		c.call_on_id("current_network_diff", |t: &mut TextView| {
+			t.set_content(format!("Current Network Difficulty: {}", client_stats.current_network_difficulty));
+		});
 		c.call_on_id("last_message_sent", |t: &mut TextView| {
 			t.set_content(client_stats.last_message_sent.clone());
 		});

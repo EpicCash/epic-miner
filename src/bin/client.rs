@@ -272,6 +272,21 @@ impl Controller {
 		}
 	}
 
+	fn parse_difficulty(&self, job_diff: &Vec<(String, u64)>) -> String {
+		let mut cuckoo_diff = "Nan".to_owned();
+		let mut progpow_diff = "Nan".to_owned();
+		let mut randomx_diff = "Nan".to_owned();
+		for (algo, diff) in job_diff {
+			match algo.as_str() {
+				"cuckoo" => cuckoo_diff = format!("{}", diff),
+				"randomx" => randomx_diff = format!("{}", diff),
+				"progpow" => progpow_diff = format!("{}", diff),
+				_ => (),
+			}
+		};
+		format!("Cuckatoo: {}, ProgPow: {}, RandomX: {}", cuckoo_diff, progpow_diff, randomx_diff)
+	}
+
 	fn send_message_get_job_template(&mut self) -> Result<(), Error> {
 		let req = types::RpcRequest {
 			id: self.last_request_id.to_string(),
@@ -362,6 +377,7 @@ impl Controller {
 			types::MinerMessage::ReceivedSeed(job.epochs);
 		self.miner_tx.send(miner_message)?;
 
+
 		let difficulty = {
 			let mut diff = 1;
 	
@@ -374,14 +390,23 @@ impl Controller {
 
 			diff
 		};
-
+		let algo_needed = match job.algorithm.as_str() {
+			"cuckoo" => "Cuckatoo".to_string(),
+			"randomx" => "RandomX".to_string(),
+			"progpow" => "ProgPow".to_string(),
+			_ => "".to_string(),
+		};
+		let job_diff = self.parse_difficulty(&job.difficulty);
+		let current_network_diff = self.parse_difficulty(&job.block_difficulty);
 		let miner_message =
 			types::MinerMessage::ReceivedJob(job.height, job.job_id, difficulty, job.pre_pow);
 		let mut stats = self.stats.write()?;
 		stats.client_stats.last_message_received = format!(
-			"Last Message Received: Start Job for Height: {}, Difficulty: {:?}",
-			job.height, job.difficulty
+			"Last Message Received: Start Job for Height: {}, Share Difficulty: {}",
+			job.height, job_diff
 		);
+		stats.client_stats.algorithm_needed = algo_needed;
+		stats.client_stats.current_network_difficulty = current_network_diff;
 		self.miner_tx.send(miner_message).map_err(|e| e.into())
 	}
 
@@ -418,16 +443,16 @@ impl Controller {
 			"status" => {
 				if let Some(result) = res.result {
 					let st = serde_json::from_value::<types::WorkerStatus>(result)?;
-					info!(
-						LOGGER,
-						"Status for worker {} - Height: {}, Difficulty: {}, ({}/{}/{})",
-						st.id,
-						st.height,
-						st.difficulty,
-						st.accepted,
-						st.rejected,
-						st.stale
-					);
+					// info!(
+					// 	LOGGER,
+					// 	"Status for worker {} - Height: {}, Difficulty: {}, ({}/{}/{})",
+					// 	st.id,
+					// 	st.height,
+					// 	st.difficulty,
+					// 	st.accepted,
+					// 	st.rejected,
+					// 	st.stale
+					// );
 					// Add these status to the stats
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received = format!(
@@ -447,16 +472,17 @@ impl Controller {
 			"getjobtemplate" => {
 				if let Some(result) = res.result {
 					let job: types::JobTemplate = serde_json::from_value(result)?;
+					let job_diff = self.parse_difficulty(&job.block_difficulty);
 					{
 						let mut stats = self.stats.write()?;
 						stats.client_stats.last_message_received = format!(
 							"Last Message Received: Got job for block {} at difficulty {:?}",
-							job.height, job.difficulty
+							job.height, job_diff
 						);
 					}
 					info!(
 						LOGGER,
-						"Got a job at height {} and difficulty {:?}", job.height, job.difficulty
+						"Got a job at height {} and share difficulty {:?}", job.height, job_diff 
 					);
 					self.send_miner_job(job)
 				} else {
@@ -618,6 +644,12 @@ impl Controller {
 								Some(m) => {
 									{
 										let mut stats = self.stats.write().unwrap();
+										stats.client_stats.my_algorithm = match self.algorithm {
+											Algorithm::Cuckoo => "Cuckatoo".to_string(),
+											Algorithm::RandomX => "RandomX".to_string(),
+											Algorithm::ProgPow => "ProgPow".to_string(),
+											_ => "".to_string(),
+										};
 										stats.client_stats.connected = true;
 									}
 									// figure out what kind of message,
