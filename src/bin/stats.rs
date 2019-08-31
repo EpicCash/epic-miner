@@ -100,6 +100,13 @@ pub struct ClientStats {
 	pub last_message_sent: String,
 	/// Last response/command received from server
 	pub last_message_received: String,
+	/// Name of the algorithm used to mine in the current epic-miner
+	pub my_algorithm: String,
+	/// Algorithm that the server needs to be mined
+	pub algorithm_needed: String,
+	/// The current network difficulty
+	pub current_network_difficulty: String,
+	
 }
 
 impl Default for ClientStats {
@@ -110,6 +117,9 @@ impl Default for ClientStats {
 			connection_status: "Connection Status: Starting".to_string(),
 			last_message_sent: "Last Message Sent: None".to_string(),
 			last_message_received: "Last Message Received: None".to_string(),
+			my_algorithm: "".to_string(),
+			algorithm_needed: "".to_string(),
+			current_network_difficulty: "".to_string(),
 		}
 	}
 }
