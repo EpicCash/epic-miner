@@ -55,6 +55,6 @@ pub fn from_hex_string(in_str: &str) -> Vec<u8> {
 	bytes
 }
 
-pub fn get_random_nonce() -> u64 {
+pub fn get_random_nonce() -> u32 {
 	rand::OsRng::new().unwrap().gen()
 }
