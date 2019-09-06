@@ -264,7 +264,7 @@ impl RxMiner {
 					s.stats[instance].hashes_per_sec = 0;
 				}
 
-				debug!(LOGGER, "It is waiting the dataset finish the loading....");
+				//debug!(LOGGER, "It is waiting the dataset finish the loading....");
 				thread::sleep(time::Duration::from_micros(100));
 				continue;
 			}
