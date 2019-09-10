@@ -109,7 +109,7 @@ impl PpMiner {
 			keccak_256(&header_pre, &mut header);
 
 			let start = timestamp();
-			gpu.compute_with_startnonce(header, height, (height / 30000) as i32, target, util::get_random_nonce() as u64);
+			gpu.compute_with_startnonce(header, height, (height / 30000) as i32, target, util::get_random_nonce());
 			let end = timestamp();
 
 			iter_count += WORK_PER_CALL;
