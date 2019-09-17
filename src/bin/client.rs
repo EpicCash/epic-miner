@@ -429,7 +429,25 @@ impl Controller {
 				Some(params) => {
 					let job = serde_json::from_value::<types::JobTemplate>(params)?;
 					info!(LOGGER, "Got a new job: {:?}", job);
-					self.send_miner_job(job)
+
+
+
+					let algo_needed = match job.algorithm.as_str() {
+						"cuckoo" => "cuckoo".to_string(),
+						"randomx" => "randomx".to_string(),
+						"progpow" => "progpow".to_string(),
+						_ => "".to_string(),
+					};
+
+					if self.parse_algorithm() == algo_needed {
+						self.send_miner_job(job)
+					}else{
+						info!(LOGGER, "my algo: {}, algo from job {}", self.parse_algorithm(), algo_needed);
+						self.send_miner_stop()
+					}
+
+
+
 				}
 			},
 			_ => Err(Error::RequestError("Unknonw method".to_owned())),
@@ -484,7 +502,22 @@ impl Controller {
 						LOGGER,
 						"Got a job at height {} and share difficulty {:?}", job.height, job_diff 
 					);
-					self.send_miner_job(job)
+
+					let algo_needed = match job.algorithm.as_str() {
+						"cuckoo" => "cuckoo".to_string(),
+						"randomx" => "randomx".to_string(),
+						"progpow" => "progpow".to_string(),
+						_ => "".to_string(),
+					};
+
+					if self.parse_algorithm() == algo_needed {
+						self.send_miner_job(job)
+					}else{
+						info!(LOGGER, "my algo: {}, algo from job {}", self.parse_algorithm(), algo_needed);
+						self.send_miner_stop()
+					}
+
+
 				} else {
 					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write()?;
