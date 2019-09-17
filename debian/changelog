@@ -1,3 +1,10 @@
+epic-miner (2.3.1-1) bionic; urgency=medium
+
+  [ Yuri Albuquerque ]
+  * Mine only when right algo is needed.
+
+ -- Ubuntu <ubuntu@ip-172-31-26-231.ec2.internal>  Tue, 17 Sep 2019 19:07:42 +0000
+
 epic-miner (2.3.0-1) bionic; urgency=medium
 
   [ Aron Castro ]
