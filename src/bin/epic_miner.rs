@@ -34,6 +34,8 @@ extern crate native_tls;
 extern crate time;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate clap;
 extern crate serde_json;
 #[macro_use]
 extern crate slog;
@@ -49,6 +51,7 @@ pub mod types;
 #[cfg(feature = "tui")]
 pub mod tui;
 
+use clap::App;
 use config::GlobalConfig;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
@@ -217,13 +220,26 @@ where
 }
 
 fn main() {
+	let yml = load_yaml!("epic_miner.yml");
+	let args = App::from_yaml(yml).get_matches();
+	if let ("new_config", _) = args.subcommand() {
+		GlobalConfig::default()
+			.copy_config_file()
+			.unwrap_or_else(|e| panic!("Error: {}", e));
+		return ();
+	}
 	// Init configuration
-	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
-		panic!("Error parsing config file: {}", e);
-	});
+	let mut global_config =
+		GlobalConfig::new(args.value_of("config_file_path")).unwrap_or_else(|e| {
+			panic!("Error parsing config file: {}", e);
+		});
 	println!(
 		"Starting Epic-Miner from config file at: {}",
-		global_config.config_file_path.expect("Couldn't find the configuration file").to_str().expect("The path to the configuration file is not a valid utf-8 string")
+		global_config
+			.config_file_path
+			.expect("Couldn't find the configuration file")
+			.to_str()
+			.expect("The path to the configuration file is not a valid utf-8 string")
 	);
 	// Init logging
 	let mut log_conf = global_config

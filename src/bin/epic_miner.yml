@@ -1,0 +1,15 @@
+name: epic miner
+version: "2.3.2"
+about: Miner for the Lightweight implementation of the MimbleWimble protocol.
+author: The Epic Team
+
+args:
+  - config_file_path:
+      help: Path to an epic-miner.toml configuration file that will be used to create the miner
+      short: c
+      long: config_file_path
+      takes_value: true
+subcommands:
+  - new_config:
+      about: Create a new copy of the epic-miner.toml in the current folder.
+
