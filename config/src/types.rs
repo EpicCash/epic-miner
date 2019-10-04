@@ -18,10 +18,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{fmt, io};
 
-use util;
-use core::Algorithm;
 use core::config::MinerConfig;
-
+use core::Algorithm;
+use util;
 
 /// Error type wrapping config errors.
 #[derive(Debug)]
@@ -33,10 +32,14 @@ pub enum ConfigError {
 	FileIOError(String, String),
 
 	/// No file found
-	FileNotFoundError(String),
+	FileNotFoundError(),
 
 	/// Error serializing config values
 	SerializationError(String),
+
+	/// Error when trying to create another epic-miner.toml
+	/// and the file already exists in the current directory
+	FileAlreadyExistsError(),
 }
 
 impl fmt::Display for ConfigError {
@@ -50,11 +53,17 @@ impl fmt::Display for ConfigError {
 			ConfigError::FileIOError(ref file_name, ref message) => {
 				write!(f, "{} {}", message, file_name)
 			}
-			ConfigError::FileNotFoundError(ref file_name) => {
-				write!(f, "Configuration file not found: {}", file_name)
+			ConfigError::FileNotFoundError() => {
+				write!(f, "Could not find a valid epic-miner.toml!")
 			}
 			ConfigError::SerializationError(ref message) => {
 				write!(f, "Error serializing configuration: {}", message)
+			}
+			ConfigError::SerializationError(ref message) => {
+				write!(f, "Error serializing configuration: {}", message)
+			}
+			ConfigError::FileAlreadyExistsError() => {
+				write!(f, "It's not possible to create a new epic-miner.toml, a file with the same name already exists in this folder!")
 			}
 		}
 	}

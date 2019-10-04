@@ -19,10 +19,10 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use cuckoo::{PluginConfig};
-use toml;
 use core::config::MinerConfig;
 use core::MinerError;
+use cuckoo::PluginConfig;
+use toml;
 use types::{ConfigError, ConfigMembers, GlobalConfig};
 use util::{LoggingConfig, LOGGER};
 
@@ -32,9 +32,7 @@ extern crate dirs;
 /// the config file location
 
 const CONFIG_FILE_NAME: &'static str = "epic-miner.toml";
-const GRIN_HOME: &'static str = ".epic";
-
-
+const EPIC_HOME: &'static str = ".epic";
 
 /// Returns the defaults, as strewn throughout the code
 impl Default for ConfigMembers {
@@ -57,8 +55,35 @@ impl Default for GlobalConfig {
 }
 
 impl GlobalConfig {
-	/// Need to decide on rules where to read the config file from,
-	/// but will take a stab at logic for now
+	/// Copy the epic-miner.toml from the default locations to the current folder
+	pub fn copy_config_file(&mut self) -> Result<(), ConfigError> {
+		let mut config_path_new = env::current_dir().unwrap();
+		config_path_new.push(CONFIG_FILE_NAME);
+		if config_path_new.exists() {
+			return Err(ConfigError::FileAlreadyExistsError());
+		}
+		self.derive_config_location()?;
+		let config_path_original = self
+			.config_file_path
+			.clone()
+			.unwrap_or(PathBuf::from("".to_owned()));
+		std::fs::copy(&config_path_original, &config_path_new).map_err(|e| {
+			ConfigError::FileIOError(
+				format!(
+					"Unable to copy the file {} to {}! :",
+					config_path_original.display(),
+					config_path_new.display()
+				),
+				format!("{:?}", e),
+			)
+		})?;
+		println!(
+			"Successfully copied the file {} to {}",
+			config_path_original.display(),
+			config_path_new.display()
+		);
+		Ok(())
+	}
 
 	fn derive_config_location(&mut self) -> Result<(), ConfigError> {
 		// First, check working directory
@@ -68,6 +93,10 @@ impl GlobalConfig {
 			self.config_file_path = Some(config_path);
 			return Ok(());
 		}
+		println!(
+			"The file {} was not found! Moving to the next location!",
+			config_path.display()
+		);
 		// Next, look in directory of executable
 		let mut config_path = env::current_exe().unwrap();
 		config_path.pop();
@@ -76,25 +105,33 @@ impl GlobalConfig {
 			self.config_file_path = Some(config_path);
 			return Ok(());
 		}
+		println!(
+			"The file {} was not found! Moving to the next location!",
+			config_path.display()
+		);
 		// Then look in {user_home}/.epic
 		let config_path = dirs::home_dir();
 		if let Some(mut p) = config_path {
-			p.push(GRIN_HOME);
+			p.push(EPIC_HOME);
 			p.push(CONFIG_FILE_NAME);
 			if p.exists() {
 				self.config_file_path = Some(p);
 				return Ok(());
 			}
+			println!(
+				"The file {} was not found! Moving to the next location!",
+				p.display()
+			);
 		}
-        // Then look in /etc/epic-miner.toml
-        let config_path = PathBuf::from(r"/etc/epic-miner.toml");
-        if config_path.exists() {
-            self.config_file_path = Some(config_path);
-            return Ok(());
-        }
-
+		// Then look in /etc/epic-miner.toml
+		let config_path = PathBuf::from(r"/etc/epic-miner.toml");
+		if config_path.exists() {
+			self.config_file_path = Some(config_path);
+			return Ok(());
+		}
+		println!("The file {} was not found!", config_path.display());
 		// Give up
-		Err(ConfigError::FileNotFoundError(String::from("")))
+		Err(ConfigError::FileNotFoundError())
 	}
 
 	/// Takes the path to a config file, or if NONE, tries
@@ -116,15 +153,11 @@ impl GlobalConfig {
 
 		// Config file path is given but not valid
 		if !return_value.config_file_path.as_mut().unwrap().exists() {
-			return Err(ConfigError::FileNotFoundError(String::from(
-				return_value
-					.config_file_path
-					.as_mut()
-					.unwrap()
-					.to_str()
-					.unwrap()
-					.clone(),
-			)));
+			println!(
+				"Checking the file {}",
+				return_value.config_file_path.unwrap().display()
+			);
+			return Err(ConfigError::FileNotFoundError());
 		}
 
 		// Try to parse the config file if it exists

@@ -34,6 +34,7 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 term = "0.4"
 time = "0.1"
 rand = "^0.3.16"
+clap = { version = "2.31", features = ["yaml"] }
 
 epic_miner_core = { path = "./core", version = "0.1.0" }
 epic_miner_util = { path = "./util", version = "1.0.2" }
