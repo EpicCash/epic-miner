@@ -283,8 +283,11 @@ impl Controller {
 				"progpow" => progpow_diff = format!("{}", diff),
 				_ => (),
 			}
-		};
-		format!("Cuckatoo: {}, ProgPow: {}, RandomX: {}", cuckoo_diff, progpow_diff, randomx_diff)
+		}
+		format!(
+			"Cuckatoo: {}, ProgPow: {}, RandomX: {}",
+			cuckoo_diff, progpow_diff, randomx_diff
+		)
 	}
 
 	fn send_message_get_job_template(&mut self) -> Result<(), Error> {
@@ -320,7 +323,7 @@ impl Controller {
 		let params = types::LoginParams {
 			login: login_str,
 			pass: password_str,
-			agent: "epic-miner".to_string(),
+			agent: format!("epic-miner/v{}", env!("CARGO_PKG_VERSION")),
 		};
 		let req = types::RpcRequest {
 			id: self.last_request_id.to_string(),
@@ -373,14 +376,12 @@ impl Controller {
 	}
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
-		let miner_message =
-			types::MinerMessage::ReceivedSeed(job.epochs);
+		let miner_message = types::MinerMessage::ReceivedSeed(job.epochs);
 		self.miner_tx.send(miner_message)?;
-
 
 		let difficulty = {
 			let mut diff = 1;
-	
+
 			for (algo, difficulty) in &job.difficulty {
 				if self.algorithm == self.get_parse_algorithm(algo.to_string())? {
 					diff = *difficulty;
@@ -411,8 +412,7 @@ impl Controller {
 	}
 
 	fn send_miner_seed(&mut self, job: types::EpochTemplate) -> Result<(), Error> {
-		let miner_message =
-			types::MinerMessage::ReceivedSeed(job.epochs);
+		let miner_message = types::MinerMessage::ReceivedSeed(job.epochs);
 		self.miner_tx.send(miner_message).map_err(|e| e.into())
 	}
 
@@ -430,8 +430,6 @@ impl Controller {
 					let job = serde_json::from_value::<types::JobTemplate>(params)?;
 					info!(LOGGER, "Got a new job: {:?}", job);
 
-
-
 					let algo_needed = match job.algorithm.as_str() {
 						"cuckoo" => "cuckoo".to_string(),
 						"randomx" => "randomx".to_string(),
@@ -441,13 +439,15 @@ impl Controller {
 
 					if self.parse_algorithm() == algo_needed {
 						self.send_miner_job(job)
-					}else{
-						info!(LOGGER, "my algo: {}, algo from job {}", self.parse_algorithm(), algo_needed);
+					} else {
+						info!(
+							LOGGER,
+							"my algo: {}, algo from job {}",
+							self.parse_algorithm(),
+							algo_needed
+						);
 						self.send_miner_stop()
 					}
-
-
-
 				}
 			},
 			_ => Err(Error::RequestError("Unknonw method".to_owned())),
@@ -500,7 +500,7 @@ impl Controller {
 					}
 					info!(
 						LOGGER,
-						"Got a job at height {} and share difficulty {:?}", job.height, job_diff 
+						"Got a job at height {} and share difficulty {:?}", job.height, job_diff
 					);
 
 					let algo_needed = match job.algorithm.as_str() {
@@ -512,12 +512,15 @@ impl Controller {
 
 					if self.parse_algorithm() == algo_needed {
 						self.send_miner_job(job)
-					}else{
-						info!(LOGGER, "my algo: {}, algo from job {}", self.parse_algorithm(), algo_needed);
+					} else {
+						info!(
+							LOGGER,
+							"my algo: {}, algo from job {}",
+							self.parse_algorithm(),
+							algo_needed
+						);
 						self.send_miner_stop()
 					}
-
-
 				} else {
 					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write()?;
