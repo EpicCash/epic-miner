@@ -13,11 +13,11 @@ autobins = false
 members = ["config", "util", "plugin"]
 
 [features]
-default = ["tui", "cpu"]
+default = ["cpu"]
 opencl = ["ocl_cuckatoo", "progpow_miner_opencl", "progpow_opencl"]
 cuda = ["progpow_miner_cuda", "progpow_cuda", "cuckoo_miner_cuda"]
 cpu = ["cuckoo_miner"]
-tui = ["cursive"]
+
 
 [[bin]]
 name = "epic-miner"
@@ -46,12 +46,12 @@ randomx = { path = "./randomx-rust", version = "0.1.0" }
 randomx_miner = { path = "./randomx-miner", version = "0.1.0" }
 
 [target.'cfg(windows)'.dependencies]
-cursive = { version = "0.12", default-features = false, features = ["pancurses-backend"], optional = true }
+cursive = { version = "0.14", default-features = false, features = ["pancurses-backend"] }
 [target.'cfg(windows)'.dependencies.pancurses]
 version = "0.16.0"
 features = ["win32"]
 [target.'cfg(unix)'.dependencies]
-cursive = { version = "0.12", optional = true }
+cursive = "0.12"
 
 [[test]]
 name = "cucumber"
