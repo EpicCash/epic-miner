@@ -6,20 +6,25 @@ version = "0.1.0"
 lazy_static = "1.3.0"
 bigint = "4.4.1"
 keccak-hash = "0.2.0"
-slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
+slog = { version = "~2.1", features = [
+    "max_level_trace",
+    "release_max_level_trace",
+] }
 
 epic_miner_core = { path = "../core", version = "0.1.0" }
 epic_miner_util = { path = "../util", version = "1.0.2" }
 
 [dependencies.progpow_opencl]
 package = "progpow"
-path = "../progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+version = "0.1.0"
 features = ["opencl"]
 optional = true
 
 [dependencies.progpow_cuda]
 package = "progpow"
-path = "../progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+version = "0.1.0"
 features = ["cuda"]
 optional = true
 
