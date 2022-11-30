@@ -78,10 +78,9 @@ pub fn info_strings() -> (String, String, String) {
 		)
 		.to_string(),
 		format!(
-			"Built with profile \"{}\", features \"{}\" on {}.",
+			"Built with profile \"{}\", features \"{}\".",
 			built_info::PROFILE,
-			built_info::FEATURES_STR,
-			built_info::BUILT_TIME_UTC
+			built_info::FEATURES_STR
 		)
 		.to_string(),
 		format!("Dependencies:\n {}", built_info::DEPENDENCIES_STR).to_string(),
