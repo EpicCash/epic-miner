@@ -13,13 +13,15 @@ epic_miner_util = { path = "../util", version = "1.0.2" }
 
 [dependencies.progpow_opencl]
 package = "progpow"
-path = "../progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+tag = "v0.1.0"
 features = ["opencl"]
 optional = true
 
 [dependencies.progpow_cuda]
 package = "progpow"
-path = "../progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+tag = "v0.1.0"
 features = ["cuda"]
 optional = true
 
