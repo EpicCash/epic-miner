@@ -43,7 +43,7 @@ epic_miner_plugin = { path = "./plugin", version = "1.0.2" }
 epic_miner_config = { path = "./config", version = "1.0.2" }
 #use this alternative inclusion below to build cuda plugins
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
-randomx = { path = "./randomx-rust", version = "0.1.0" }
+randomx = { git = "https://github.com/EpicCash/randomx-rust.git", tag = "v0.1.1" }
 randomx_miner = { path = "./randomx-miner", version = "0.1.0" }
 
 [target.'cfg(windows)'.dependencies]
@@ -88,13 +88,15 @@ optional = true
 
 [dependencies.progpow_opencl]
 package = "progpow"
-path = "./progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+tag = "v0.1.0"
 features = ["opencl"]
 optional = true
 
 [dependencies.progpow_cuda]
 package = "progpow"
-path = "./progpow-rust"
+git = "https://github.com/EpicCash/progpow-rust.git"
+tag = "v0.1.0"
 features = ["cuda"]
 optional = true
 
