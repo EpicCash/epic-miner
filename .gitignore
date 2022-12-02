@@ -4,5 +4,6 @@
 node*
 target
 *.iml
-grin-miner.log
+epic-miner.log
 build/
+epic-miner.toml
