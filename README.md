@@ -1,105 +1,81 @@
-# Epic Miner
+![epic-logo-big-text-miner](https://user-images.githubusercontent.com/68653689/209220170-9978b040-437f-4b41-ae33-9f3cdb1dc7b3.png)
+
+[![Documentation Wiki](https://img.shields.io/badge/doc-wiki-blue.svg)](https://github.com/EpicCash/documentation/wiki)
+[![License](https://img.shields.io/github/license/EpicCash/epic-miner.svg)](https://github.com/EpicCash/epic/blob/master/LICENSE)
 
 A standalone mining implementation intended for mining epic against a running Epic node.
 
-## Supported Platforms
+# Introduction to MimbleWimble and Epic
 
-At present, only mining plugins for linux-x86_64 and MacOS exist. This will likely change over time as the community creates more solvers for different platforms.
+MimbleWimble is a blockchain format and protocol that provides extremely good scalability, privacy and fungibility by relying on strong cryptographic primitives. It addresses gaps existing in almost all current blockchain implementations.
 
-## Requirements
+Epic is an open source software project that implements a MimbleWimble blockchain and fills the gaps required for a full blockchain and cryptocurrency deployment.
 
-- The requirements for building the miner are the same from the epic server. You can check them in the topic [Requirements](https://gitlab.com/epiccash/epic/blob/master/doc/build.md#requirements) in the Epic server build instructions
+The main goal and characteristics of the Epic project are:
 
-- If you want to mine using CUDA (which requires an NVIDIA GPU):
-  - You will need the Cuda toolkit 9+ (you can check if you have it installed by executing the command in the terminal: nvcc --version)
-- If you want to mine using **CPUs/GPUs**
-  - You will need to install opencl-dev
+* Privacy by default. This enables complete fungibility without precluding
+  the ability to selectively disclose information as needed.
+* Scales mostly with the number of users and minimally with the number of
+  transactions (<100 byte `kernel`), resulting in a large space saving compared
+  to other blockchains.
+* Strong and proven cryptography. MimbleWimble only relies on Elliptic Curve
+  Cryptography which has been tried and tested for decades.
+* Design simplicity that makes it easy to audit and maintain over time.
+* Community driven, encouraging mining decentralization.
 
-  For Debian-based distributions (Debian, Ubuntu, Mint, etc) you can install the opencl-dev with the following command in the terminal:
+## Status
 
-  ```sh
-  sudo apt install ocl-icd-opencl-dev
-  ```
+Epic is live with mainnet.
 
-## Build steps
+# Getting Started
 
-```sh
-git clone https://gitlab.com/epiccash/epic-miner
-cd epic-miner
-git submodule update --init --recursive
-```
+The full Epic Wiki can be found here: [Epic Cash - Wiki](https://github.com/EpicCash/documentation/wiki)
 
-To build the project you will have to specify if you are going to mine using `only CPU`, `OPENCL` or `CUDA`. To mine using only **CPU**, execute the following line in the terminal:
+## Getting started with the project :bulb:
 
-```sh
-cargo build
-```
+By the end of this section, you should have the basic knowledge of how to run Epic Cash and its different binaries functions.
 
-To mine using **CPUs/GPUs** use `OPENCL`. Execute the following line in the terminal to build with `OPENCL`:
+Here are the basic topics:
 
-```sh
-cargo build --features opencl
-```
+- [Running the server](https://github.com/EpicCash/documentation/wiki/Running-the-server)
+- [Running the wallet](https://github.com/EpicCash/documentation/wiki/Running-the-wallet)
+- [Mining](https://github.com/EpicCash/documentation/wiki/Mining)
 
-If you have NVIDIA GPUs and your system has **the latest nvidia drivers and the Cuda toolkit 9+ installed**, you can build the cuda plugins using the following command:
+## Quick User guides :books: 
 
-```sh
-cargo build --no-default-features --features cuda,tui
-```
+Has more information about the project, such as how to do transactions, and details about mining.
 
-## What was built
+Here are the basic topics:
+- [Epic wallet](https://github.com/EpicCash/documentation/wiki/Epic-wallet)
+- [Epic miner](https://github.com/EpicCash/documentation/wiki/Epic-miner)
 
-A successful build gets you:
+## Building the projects :toolbox:
 
-- `target/debug/epic-miner` - the main epic-miner binary
-- `target/debug/plugins/*` - mining plugins
+If you want to build the projects, you should be able to have the minimum requirements for building the projects directly from their repositories.
 
-## Running the Epic Miner
+This section is divided by OS:
 
-### Prerequisites
+- [Linux](https://github.com/EpicCash/documentation/wiki/Linux)
+- [Windows](https://github.com/EpicCash/documentation/wiki/Windows)
+- [macOS](https://github.com/EpicCash/documentation/wiki/macOS)
 
-**To run the epic-miner you also need an epic server (with the stratum server enabled) running and an epic wallet listening.**
+# Contributing :bricks: 
 
-- Instruction of how to run the **epic server** and the **epic wallet** (in listening mode) using the .deb packages can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/running.org).
-- If you want to build the **epic server** from source code, instructions can be found [here](https://gitlab.com/epiccash/epic/blob/master/doc/build.md).
-- If you want to build and execute **epic wallet** (in listening mode) from source code, instructions can be found [here](https://gitlab.com/epiccash/epicwallet/tree/master/doc/build.md).
+If you want to help us and contribute with our code:
+- [Contributing](https://github.com/EpicCash/documentation/wiki/Contributing)
 
-- To enable the stratum server in the epic server, we need to edit the server configuration file called `epic-server.toml`. If you are using the [epic server default configutation](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#run_config_default), this file is under your home directory in the folder `~/.epic/main`. Open this file with your text editor and find the following line:
+# Credits
 
-    ``` toml
-      enable_stratum_server = false
-    ```
+Tom Elvis Jedusor for the first formulation of MimbleWimble.
 
-    Then, change it to:
+Andrew Poelstra for his related work and improvements.
 
-    ``` toml
-      enable_stratum_server = true
-    ```
+John Tromp for the Cuckoo Cycle proof of work.
 
-    More information about this can be found on the topic [Configuring the Epic Server to work with the miner](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#config_miner_server) in the testnet documentation.
+Grin Developers for the initial implementation
 
-### Executing the epic miner
+J.K. Rowling for making it despite extraordinary adversity.
 
-**Make sure you always run epic-miner within a directory that contains an
-`epic-miner.toml` configuration file.**
+# License
 
-After you have your epic server running (with the stratum server enabled) and a wallet listening to it, to execute the epic miner follow the instructions:
-
-1. Open a new terminal window in the root directory of your Epic miner installation.
-2. To execute epic miner, you need to specify if you built it with `OPENCL` or `CUDA`. To run the epic miner compiled with `OPENCL` execute the following line in terminal:
-
-     ```sh
-     cargo run --features opencl
-     ```
-
-    And to execute your miner built with the cuda plugin, execute the command:  
-
-    ```sh
-     cargo run --features cuda
-    ```
-
-## Configuration
-
-Epic-miner can be further configured via the `epic-miner.toml` file.
-This file contains inline documentation on all configuration
-options, and should be the first point of reference. Also, you can see Topic [Configuring your epic-miner](https://gitlab.com/epiccash/epic/blob/master/doc/running.org#config_miner) in the testnet documentation for further information.
+Apache License v2.0.
