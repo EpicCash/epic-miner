@@ -1,9 +1,9 @@
 [submodule "cuckoo-miner/src/cuckoo_sys/plugins/cuckoo"]
 	path = cuckoo-miner/src/cuckoo_sys/plugins/cuckoo
 	url = https://github.com/tromp/cuckoo.git
-[submodule "randomx-rust"]
-	path = randomx-rust
-	url = ../randomx-rust.git
 [submodule "progpow-rust"]
 	path = progpow-rust
-	url = ../progpow-rust.git
+	url = https://github.com/EpicCash/progpow-rust.git
+[submodule "randomx-rust"]
+	path = randomx-rust
+	url = https://github.com/EpicCash/randomx-rust.git
